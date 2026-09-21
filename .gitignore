@@ -1,0 +1,48 @@
+# Version publica del harness. Los repos de codigo se clonan como carpetas hermanas
+# y cada uno tiene su propio git: este repo nunca los versiona.
+/api-core/
+/api-contracts/
+/api-people/
+/api-auth/
+/api-delivery/
+/web-app/
+/web-app-secondary/
+/web-app-legacy/
+/.obsidian/
+/.vs/
+
+# Junctions locales para que Obsidian indexe carpetas con punto (ver Meta/Graph-View-Config.md).
+/agentes-pipeline/
+/comandos-pipeline/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Secretos y credenciales: nunca.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+secrets*
+appsettings.Development.json
+appsettings.Local.json
+.claude/settings.local.json
+
+# Volcados de sesion en la raiz (salidas de curl, tokens, datos de personas): no se versionan.
+/*.json
+/*.txt
+
+# Worktrees de Claude Code y de /worktree.
+/.claude/worktrees/
+/.worktrees/
+
+# Credenciales de cuentas de prueba, biblioteca local de requisitos y memoria privada.
+docs/pruebas/
+/requisitos/
+
+# Herramienta de anonimizacion (contiene la tabla real -> placeholder).
+/_tools/

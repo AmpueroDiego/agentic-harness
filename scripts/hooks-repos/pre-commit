@@ -1,0 +1,24 @@
+#!/bin/sh
+# Repos hijos y sus worktrees: solo secretos, sin validador del vault.
+RAIZ=$(cd "$(dirname "$0")/../.." && pwd) || exit 1
+REPO=$(git rev-parse --show-toplevel) || exit 1
+PY=""
+for C in python3 python py \
+    "${LOCALAPPDATA:-}/Programs/Python/Python311/python.exe" \
+    "$HOME/AppData/Local/Programs/Python/Python311/python.exe"; do
+    if command -v "$C" >/dev/null 2>&1 && \
+        "$C" -c 'import sys; sys.exit(sys.version_info[0] != 3)' >/dev/null 2>&1; then
+        PY="$C"
+        break
+    fi
+done
+if [ -z "$PY" ]; then
+    echo "BLOQUEADO [pre-commit]: no hay un Python 3 funcional para revisar secretos." >&2
+    exit 1
+fi
+if ! "$PY" "$RAIZ/.claude/hooks/revisar_secretos.py" --repo "$REPO"; then
+    echo "BLOQUEADO [pre-commit]: secretos en el stage o no se pudo completar la revisión." >&2
+    echo 'Deben quedar como "" o "REPLACE_ME" (CLAUDE.md). El valor real va por user-secrets / App Settings de Azure.' >&2
+    exit 1
+fi
+exit 0

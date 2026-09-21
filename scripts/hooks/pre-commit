@@ -1,0 +1,67 @@
+#!/bin/sh
+# Git Pre-Commit Hook: Validación de Integridad del Vault de Obsidian
+#
+# Versionado desde el 2026-09-10. Antes vivía solo en .git/hooks/, que git no
+# versiona: existía en una sola PC y un clon nuevo no lo tenía. Para activarlo
+# en un clon:
+#
+#     git config core.hooksPath scripts/hooks
+#
+# Solo corre en este repo (agentic-harness). Los repos hermanos no lo heredan.
+
+# Secretos: validar un Python 3 real; el stub de Microsoft Store no alcanza.
+RAIZ=$(cd "$(dirname "$0")/../.." && pwd) || exit 1
+REPO=$(git rev-parse --show-toplevel) || exit 1
+PY=""
+for C in python3 python py \
+    "${LOCALAPPDATA:-}/Programs/Python/Python311/python.exe" \
+    "$HOME/AppData/Local/Programs/Python/Python311/python.exe"; do
+    if command -v "$C" >/dev/null 2>&1 && \
+        "$C" -c 'import sys; sys.exit(sys.version_info[0] != 3)' >/dev/null 2>&1; then
+        PY="$C"
+        break
+    fi
+done
+if [ -z "$PY" ]; then
+    echo "BLOQUEADO [pre-commit]: no hay un Python 3 funcional para revisar secretos." >&2
+    exit 1
+fi
+if ! "$PY" "$RAIZ/.claude/hooks/revisar_secretos.py" --repo "$REPO"; then
+    echo "BLOQUEADO [pre-commit]: secretos en el stage o no se pudo completar la revisión." >&2
+    echo 'Deben quedar como "" o "REPLACE_ME" (CLAUDE.md). El valor real va por user-secrets / App Settings de Azure.' >&2
+    exit 1
+fi
+
+echo "🔍 [pre-commit] Validando integridad del Vault de Obsidian..."
+
+PYTHON_CMD=""
+
+if command -v py >/dev/null 2>&1; then
+    PYTHON_CMD="py -3"
+elif [ -f "$LOCALAPPDATA/Programs/Python/Python311/python.exe" ]; then
+    PYTHON_CMD="$LOCALAPPDATA/Programs/Python/Python311/python.exe"
+elif [ -f "$HOME/AppData/Local/Programs/Python/Python311/python.exe" ]; then
+    PYTHON_CMD="$HOME/AppData/Local/Programs/Python/Python311/python.exe"
+elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+    PYTHON_CMD="python"
+fi
+
+if [ -z "$PYTHON_CMD" ]; then
+    echo "⚠️ Python no encontrado en el PATH. Saltando validación del vault."
+    exit 0
+fi
+
+$PYTHON_CMD scripts/validar-vault.py
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "❌ ERROR: El commit fue cancelado porque se detectaron errores de calidad en el Vault de Obsidian."
+    echo "   Corrige lo reportado arriba (codificación, pipes escapados o notas huérfanas) antes de intentar nuevamente."
+    exit 1
+fi
+
+echo "✅ [pre-commit] Vault de Obsidian 100% validado."
+exit 0

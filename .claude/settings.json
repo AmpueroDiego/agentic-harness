@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote -v)",
+      "Bash(git ls-files:*)",
+      "Bash(git blame:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh repo view:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet ef migrations list:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run test:*)",
+      "Bash(npx tsc --noEmit:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker compose ps:*)",
+      "Bash(docker logs:*)",
+      "Bash(netstat -ano:*)",
+      "Bash(tasklist:*)",
+      "mcp__core-db__read_query",
+      "mcp__core-db__list_tables",
+      "mcp__core-db__describe_table",
+      "mcp__contracts-db__list_tables",
+      "mcp__contracts-db__describe_table",
+      "mcp__contracts-db__sample_data",
+      "mcp__contracts-db__get_relationships",
+      "mcp__contracts-db__list_indexes",
+      "mcp__contracts-db__list_constraints",
+      "mcp__people-db__list_tables",
+      "mcp__people-db__describe_table",
+      "mcp__people-db__sample_data",
+      "mcp__people-db__get_relationships",
+      "mcp__people-db__list_indexes",
+      "mcp__people-db__list_constraints",
+      "mcp__auth-db__list_tables",
+      "mcp__auth-db__describe_table",
+      "mcp__auth-db__sample_data",
+      "mcp__auth-db__get_relationships",
+      "mcp__auth-db__find_lookup_tables",
+      "mcp__auth-db__test_connection",
+      "mcp__delivery-db__list_tables",
+      "mcp__delivery-db__describe_table",
+      "mcp__delivery-db__sample_data",
+      "mcp__delivery-db__get_relationships",
+      "mcp__github__get_pull_request",
+      "mcp__github__get_pull_request_files",
+      "mcp__github__list_pull_requests",
+      "mcp__github__get_file_contents"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(dotnet ef database update:*)",
+      "mcp__core-db__write_query",
+      "mcp__contracts-db__execute_query",
+      "mcp__people-db__execute_query",
+      "mcp__auth-db__execute_query",
+      "mcp__delivery-db__execute_query"
+    ],
+    "deny": [
+      "Bash(git checkout -- .)",
+      "mcp__core-db__drop_table",
+      "mcp__core-db__alter_table",
+      "mcp__core-db__create_table",
+      "mcp__github__merge_pull_request"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-maxlength.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

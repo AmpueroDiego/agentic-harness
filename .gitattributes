@@ -1,0 +1,11 @@
+# Diagramas y binarios: su diff es XML ilegible y nadie lo lee (2026-09-09).
+# `-diff` los muestra como "Binary files differ" en vez de volcar miles de lineas;
+# `linguist-generated` los colapsa en las vistas de diff de GitHub.
+*.drawio  -diff linguist-generated=true
+*.svg     -diff linguist-generated=true
+*.docx    -diff binary
+*.pdf     -diff binary
+
+# Hooks de git: siempre LF. Con core.autocrlf=true un clon en Windows los
+# sacaria con CRLF y sh falla con "$'\r': command not found" (2026-09-10).
+scripts/hooks/*  text eol=lf
