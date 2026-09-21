@@ -76,4 +76,4 @@ Es una copia anonimizada de un sistema en uso. Se retiraron: el contexto de nego
 
 ## Licencia
 
-MIT. Ver [LICENSE](LICENSE). El responsable del repo.
+MIT. Ver [LICENSE](LICENSE). © 2026 Diego Ampuero.
