@@ -1,6 +1,6 @@
 # agentic-harness
 
-> **English summary.** A production-grade multi-agent harness built on top of Claude Code: one orchestrator command (`/orquestar`) coordinates 11 specialised subagents (architect, planner, coder, coder-web, qa, adversary, plus five standalone ones) through fixed, verbatim hand-off contracts. It ships with production controls (bounded retry loops, a mandatory human checkpoint before schema changes, hooks that block dangerous git/PR operations and secrets in the stage, read-only database access through MCP), an Obsidian vault used as long-term memory (ADRs, one run doc per execution, golden tasks for replay), and two self-improvement agents (`retro` proposes prompt edits from run history, `system-auditor` audits the system's own source) that never edit anything without human approval. This is an anonymised copy of a system that processed 175 tasks in production over two months across six repositories; the client, its people and its infrastructure have been replaced by placeholders. MIT licensed.
+> **English summary.** A production-grade multi-agent harness built on top of Claude Code: one orchestrator command (`/orquestar`) coordinates 11 specialised subagents (architect, planner, coder, coder-web, qa, adversary, plus five standalone ones) through fixed, verbatim hand-off contracts. It ships with production controls (bounded retry loops, a mandatory human checkpoint before schema changes, hooks that block dangerous git/PR operations and secrets in the stage, read-only database access through MCP), an Obsidian vault used as long-term memory (ADRs, one run doc per execution, golden tasks for replay), and two self-improvement agents (`retro` proposes prompt edits from run history, `system-auditor` audits the system's own source) that never edit anything without human approval. A portable installer (`install.sh` / `install.ps1`) configures it for any project from a single `harness.ini` (git is the only mandatory integration; tracker, GitHub, Codex/Antigravity/DeepSeek, database MCP servers and the Obsidian vault are all optional and degrade gracefully), and `profiles/` ships example stack conventions (.NET, Node/TS, Python) the coder agents draw on. This is an anonymised copy of a system that processed 175 tasks in production over two months across six repositories; the client, its people and its infrastructure have been replaced by placeholders. MIT licensed.
 
 Harness multiagente sobre Claude Code, usado en producción para desarrollar y mantener un ecosistema de seis repositorios (.NET 10 + React/TypeScript). Esta es una **versión anonimizada**: el cliente, las personas del equipo, los hosts, los identificadores de tableros y toda la lógica de negocio fueron reemplazados por placeholders (`AcmeOrg`, `api-core`, `<sql-host>`, `Revisor Principal`, etc.) o retirados. Lo que queda es el sistema: cómo se reparte el trabajo, cómo se verifica y cómo aprende.
 
@@ -53,22 +53,68 @@ Agentes independientes, fuera del pipeline: `analyst` (preguntas de datos, solo 
 └── launch.json    ejemplo de configuraciones de arranque del frontend
 .agents/skills/security/   catálogo CWE/OWASP que carga la revisión de seguridad
 scripts/                   pre-commit (secretos + vault), instalador de hooks, validar-vault.py
+profiles/                  perfiles de stack (dotnet, node-ts, python) que alimentan coder/coder-ui
 Meta/                      documentación del sistema multiagente y de la configuración del vault
 CLAUDE.md · AGENTS.md      reglas para cualquier sesión (AGENTS.md para herramientas que no leen CLAUDE.md)
 Home.md                    tablero del vault (Dataview)
+install.sh · install.ps1   instalador/configurador (ver "Quick start" abajo)
+harness.ini.example        plantilla de configuración; harness.ini real nunca se versiona
 ```
 
-## Cómo adaptarlo a otro repo
+## Quick start — instalarlo en tu proyecto
 
-1. **Clona esta carpeta como raíz de trabajo** y clona tus repos de código adentro (o al lado, ajustando `.gitignore`). Los agentes asumen que el repo destino es una carpeta hermana de `.claude/`.
-2. **Renombra los repos.** Los placeholders son `api-core`, `api-contracts`, `api-people`, `api-auth`, `api-delivery`, `web-app`; un `grep -rl api-core .claude` te da los puntos de contacto. Los roles (BFF, IdP, frontend) sí importan: `coder` está escrito para .NET/EF Core y `coder-web` para React/TypeScript.
-3. **Escribe tu "Visión de dominio" en `CLAUDE.md`.** Los seis agentes del pipeline la leen antes de diseñar; en esta versión está vacía a propósito.
-4. **Conecta tus MCP de base de datos** con los nombres de `settings.json` (`core-db`, `contracts-db`, ...) o renómbralos ahí y en el `tools:` de `planner`/`analyst`. Deja la escritura en `ask` o `deny`.
-5. **Instala los hooks de usuario.** `git-guard.sh`, `check-file-size.py`, `check-bash-read.py` y `revisar_secretos.py` se copian a `~/.claude/hooks/` y se registran en `~/.claude/settings.json`; `sh scripts/instalar-hooks.sh` configura el `pre-commit` de git.
-6. **Vacía la memoria y empieza a llenarla.** Crea `docs/runs/INDEX.md`, `RETRO-LOG.md`, `GOLDEN-TASKS.md` y `docs/adr/` con tu primer ADR. El Step 5 de `/orquestar` escribe el run doc; corre `retro` cada 3-5 corridas y `system-auditor` cada ~10.
-7. **Opcional:** Codex CLI y Antigravity CLI (`agy`) para los motores externos; sin ellos el pipeline corre solo con Claude y lo dice en el reporte final.
+```sh
+git clone https://github.com/AmpueroDiego/agentic-harness.git
+cd agentic-harness
+./install.sh --target /ruta/a/tu-proyecto      # asistente interactivo
+```
+
+En Windows sin bash: `.\install.ps1 -Target C:\ruta\a\tu-proyecto`. Ambos son
+equivalentes y aceptan `-DryRun`/`--dry-run` para ver qué harían sin escribir
+nada, y `-NonInteractive`/`--non-interactive` para correr sin preguntas
+(usa `harness.ini.example` tal cual, o el que le pases con `--ini`).
+
+El instalador:
+1. Detecta qué tenés instalado (`git`, `gh`, `node`, `dotnet`, `python`, `claude`, `codex`, `agy`) — nada de esto es obligatorio salvo `git`.
+2. Genera (o reutiliza) `harness.ini` en tu proyecto — nunca se versiona, ver `harness.ini.example` para el formato y qué es obligatorio vs. opcional.
+3. Copia `agents/`, `commands/`, `hooks/`, `scripts/`, `tools/` y `profiles/` a `.claude/` de tu proyecto, y `CLAUDE.md`/`AGENTS.md` a su raíz, con `AcmeOrg` ya sustituido por el nombre de tu proyecto (y la rama base, si no es `develop`). Un archivo existente y distinto se respalda a `.bak` en vez de perderse.
+4. Instala un hook de `pre-commit` que revisa secretos antes de cada commit (`core.hooksPath` apunta a `.claude/hooks-git/`), salvo `--skip-hook` o si el destino ya tenía otro hook configurado.
+5. Termina con un **doctor**: qué quedó activo y qué se omitió (tracker, motores, MCP de base de datos, vault).
+
+Es idempotente (correr dos veces no cambia nada de más) y no destructivo
+(nunca sobrescribe sin backup, salvo `--force`). Después de instalar, quedan
+tres cosas manuales que el instalador no adivina por vos:
+- **Los nombres reales de tus repos.** Los placeholders son `api-core`, `api-contracts`, `api-people`, `api-auth`, `api-delivery`, `web-app`; un `grep -rl api-core .claude` te da los puntos de contacto. Los roles (BFF, IdP, frontend) sí importan: `coder` trae de ejemplo convenciones .NET/EF Core y `coder-web` React/TypeScript — ver "Perfiles de stack" abajo para no reescribirlas a mano.
+- **La sección "Visión de dominio" de `CLAUDE.md`.** Los seis agentes del pipeline la leen antes de diseñar; llega vacía a propósito — es lo único que de verdad no se puede genérica.
+- **Vaciar y empezar a llenar la memoria**, si vas a usar el vault de Obsidian: `docs/runs/INDEX.md`, `RETRO-LOG.md`, `GOLDEN-TASKS.md`, `docs/adr/`. El Step 5 de `/orquestar` escribe el run doc; corré `retro` cada 3-5 corridas y `system-auditor` cada ~10.
 
 Detalles que conviene leer primero: `Meta/sistema-multiagente-supervisado.md` (por qué existe cada capa y qué pasó sin ella) y `.claude/commands/orquestar.md` (el protocolo completo, paso por paso).
+
+## Integraciones opcionales
+
+Todo lo que no sea git es opcional y el sistema se degrada sin romperse si
+falta — `harness.ini.example` documenta cada sección:
+
+| Integración | Sección del ini | Si falta |
+|---|---|---|
+| Tracker de tareas (Trello / Azure DevOps / GitHub Issues) | `[tracker]` | `orquestar` pregunta la tarjeta a mano en vez de buscarla |
+| GitHub | `[github]` | los PR se abren sin reviewer por defecto |
+| Codex CLI | `[engines] codex_enabled` | se salta la segunda revisión antes del push |
+| Antigravity CLI (Gemini) | `[engines] antigravity_enabled` | sin revisor visual ni shunt de lecturas grandes |
+| MCP de base de datos | `[databases]` | `planner`/`analyst` trabajan solo con lo que puedan leer del código |
+| Vault de Obsidian | `[vault]` | sin memoria de largo plazo entre corridas; `docs/adr`/`docs/runs` siguen sirviendo como markdown simple |
+
+Los secretos de cada integración (tokens, PATs, API keys) nunca van en
+`harness.ini`: el ini solo declara el *nombre* de la variable de entorno
+(sufijo `_env`) que los contiene.
+
+## Perfiles de stack
+
+`profiles/` trae tres ejemplos (`dotnet.md`, `node-ts.md`, `python.md`) con
+las convenciones y "hard rules" que un `coder`/`coder-ui` necesita para ese
+stack. `harness.ini` declara `stack_profile = <nombre>` por repo; si tu
+stack no está entre los tres, copiá `profiles/_plantilla.md` y escribí el
+tuyo — ver `profiles/README.md`.
 
 ## Sobre esta versión
 

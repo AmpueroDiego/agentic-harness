@@ -1,0 +1,112 @@
+# harness.ini — configuración del harness para ESTE proyecto.
+#
+# Copia este archivo a `harness.ini` (sin ".example") y completa los valores.
+# `harness.ini` NUNCA se versiona (ya está en .gitignore) porque puede llevar
+# nombres de repos internos, hosts, o ids de tablero que no son secretos pero
+# tampoco son públicos. Los SECRETOS (tokens, contraseñas, API keys) NUNCA van
+# acá — este archivo solo declara el NOMBRE de la variable de entorno que los
+# contiene (sufijo `_env`). El instalador lee esas variables en tiempo de
+# instalación/ejecución, nunca las escribe en un archivo versionado.
+#
+# Todo lo que no sea [project], [git] y [repos] es OPCIONAL: si dejas una
+# sección vacía o con provider=none, el instalador la omite y el sistema
+# funciona igual, solo que sin esa integración (se degrada, no se rompe).
+
+[project]
+# Nombre corto del proyecto. Reemplaza el placeholder "AcmeOrg" en CLAUDE.md,
+# AGENTS.md y los agentes al instalar.
+name = MiProyecto
+# Idioma de trabajo por defecto para commits, PRs y reportes de los agentes.
+language = es
+
+[git]
+# Rama a la que apuntan ramas de trabajo y PRs. Nunca "main" en un flujo con
+# ambientes intermedios — pon aquí la que uses de verdad (develop, dev, trunk...).
+base_branch = develop
+# Rama de producción/release, si es distinta de base_branch.
+main_branch = main
+# Convención de nombre de rama: feature/<slug>, fix/<slug>, u otra tuya.
+branch_prefix_feature = feature/
+branch_prefix_fix = fix/
+# Convención de mensajes de commit: conventional | libre
+commit_convention = conventional
+
+# --- Repos que el harness orquesta -----------------------------------------
+# Una sección [repo:<id>] por repo. <id> es el nombre de carpeta real del repo
+# (hermano de esta carpeta, o dentro de ella — lo decide `path`).
+# `role` es libre pero los perfiles de agente conocen algunos valores:
+#   backend   -> coder (ver [engines]/profiles/ para el stack)
+#   frontend  -> coder-ui
+#   gateway   -> backend que agrega a los demás (rol tipo BFF)
+#   identity  -> emisor de auth/roles (IdP)
+# Deja solo los repos que existan en tu proyecto; uno solo (backend) alcanza.
+
+[repo:api-core]
+role = gateway
+path = ../api-core
+stack_profile = dotnet
+claude_md = yes
+
+[repo:web-app]
+role = frontend
+path = ../web-app
+stack_profile = node-ts
+claude_md = no
+
+# --- Tracker de tareas -------------------------------------------------------
+[tracker]
+# none | trello | azuredevops | github-issues
+provider = none
+
+[trello]
+# Solo si [tracker] provider = trello. El id/nombre del tablero no es secreto,
+# el token y la key sí — van por variable de entorno, nunca en texto plano.
+board_id =
+token_env = TRELLO_TOKEN
+key_env = TRELLO_KEY
+# Miembros que deben ir en toda tarjeta entregada (usernames, no nombres reales).
+required_members =
+# Nombre exacto de la columna "en revisión", si tu tablero la tiene.
+review_column_name =
+
+[azuredevops]
+# Solo si [tracker] provider = azuredevops.
+organization =
+project =
+pat_env = AZURE_DEVOPS_PAT
+
+# --- GitHub ------------------------------------------------------------------
+[github]
+# Cuenta/organización dueña de los repos remotos.
+owner =
+# Usuario de gh a pedir como reviewer por defecto en cada PR (opcional).
+default_reviewer =
+
+# --- Motores adicionales (todos opcionales; el pipeline corre solo con Claude
+# si ninguno está disponible, y lo dice en el reporte final) ------------------
+[engines]
+codex_enabled = false
+antigravity_enabled = false
+deepseek_enabled = false
+deepseek_api_key_env = DEEPSEEK_API_KEY
+
+# --- Bases de datos vía MCP (opcional; el planner/analyst degradan a "sin
+# acceso a datos reales" si no hay ninguna configurada) -----------------------
+[databases]
+# Una lista separada por comas de los MCP de BD a habilitar, con el mismo
+# nombre que uses al registrar el servidor MCP (mcp__<nombre>__list_tables...).
+# Ejemplo: core-db,contracts-db
+enabled_mcp_servers =
+
+# --- Vault de Obsidian como memoria de largo plazo (opcional) ----------------
+[vault]
+enabled = false
+# Ruta al vault, relativa a la raíz del proyecto. Si enabled=false se ignora.
+path = .
+
+# --- Convenciones generales ---------------------------------------------------
+[conventions]
+# Línea de atribución que se agrega al final de cada commit/PR generado por
+# los agentes. Déjalo vacío para no agregar ninguna.
+attribution_commit =
+attribution_pr =

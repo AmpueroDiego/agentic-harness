@@ -9,3 +9,7 @@
 # Hooks de git: siempre LF. Con core.autocrlf=true un clon en Windows los
 # sacaria con CRLF y sh falla con "$'\r': command not found" (2026-09-10).
 scripts/hooks/*  text eol=lf
+scripts/hooks-repos/*  text eol=lf
+scripts/instalar-hooks.sh  text eol=lf
+install.sh  text eol=lf
+.claude/hooks/*.sh  text eol=lf

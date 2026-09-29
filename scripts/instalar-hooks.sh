@@ -1,6 +1,8 @@
 #!/bin/sh
-# Instala hooks de AcmeOrg. Los worktrees comparten la config del repo:
-# quedan cubiertos por la ruta absoluta de hooks de cada repo hijo.
+# Instala los hooks de este proyecto en cada repo hijo declarado en
+# harness.ini (secciones [repo:<id>]), más la raiz (".").
+# Los worktrees comparten la config del repo: quedan cubiertos por la ruta
+# absoluta de hooks de cada repo hijo.
 # Uso: sh scripts/instalar-hooks.sh [--forzar]
 set -u
 FORZAR=0
@@ -15,7 +17,13 @@ HOOKS_HIJOS="$RAIZ/scripts/hooks-repos"
 if command -v cygpath >/dev/null 2>&1; then
     HOOKS_HIJOS=$(cygpath -am "$HOOKS_HIJOS") || exit 1
 fi
-REPOS=". api-core web-app api-contracts api-people api-auth api-delivery"
+# Repos hijos: se leen de harness.ini (secciones [repo:<id>], usando el <id>
+# como nombre de carpeta). Sin harness.ini, solo se instala en la raiz.
+REPOS="."
+if [ -f "$RAIZ/harness.ini" ]; then
+    REPOS_INI=$(grep -o '^\[repo:[^]]*\]' "$RAIZ/harness.ini" 2>/dev/null | sed 's/^\[repo:\(.*\)\]$/\1/') || REPOS_INI=""
+    [ -n "$REPOS_INI" ] && REPOS=". $(printf '%s' "$REPOS_INI" | tr '\n' ' ')"
+fi
 ESTADO=0
 for REPO in $REPOS; do
     CARPETA="$RAIZ/$REPO"

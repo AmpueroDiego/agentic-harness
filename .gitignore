@@ -46,3 +46,12 @@ docs/pruebas/
 
 # Herramienta de anonimizacion (contiene la tabla real -> placeholder).
 /_tools/
+
+# Configuracion del instalador: puede llevar nombres de repos internos, hosts
+# o ids de tablero que no son secretos pero tampoco son publicos. Nunca se
+# versiona; harness.ini.example es la plantilla que si se versiona.
+/harness.ini
+
+# Node
+node_modules/
+
