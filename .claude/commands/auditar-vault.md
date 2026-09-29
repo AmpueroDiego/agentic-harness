@@ -73,7 +73,7 @@ equivalentes:
 
 Las **hojas** que reporta `--detalle` (entrantes pero ningún saliente) merecen la
 segunda: cuelgan de un solo hilo y si su índice se oculta vuelven a quedar sueltas.
-Es lo que pasó con las 13 tarjetas de Trello.
+Es lo que pasó con un grupo de tarjetas del tablero de tareas.
 
 ## Reglas al aplicar correcciones
 

@@ -327,7 +327,7 @@ Las listas completas de vectores y heurísticas viven solo en [[agentes-pipeline
 1. **Outbox transaccional.** El mensaje se persiste en la misma transacción que la entidad; un job de Quartz reclama lotes con `ROWLOCK, READPAST, UPDLOCK` para que las réplicas no se pisen.
 2. **Descubrimiento de servicios.** Ninguna URL fija: se resuelven en runtime contra `api-auth` y se cachean con `IMemoryCacheService` (Redis con fallback a memoria).
 3. **Identidad propia por servicio.** `api-core` se autentica como `<identidad-servicio>@<dominio>`, nunca con credenciales prestadas.
-4. **Chats de WhatsApp con `@lid`.** `ChatIdNormalizer` preserva el LID de WAHA y el handler de entrantes no lo trata como teléfono.
+4. **Ids opacos de un canal externo.** Si el proveedor de mensajería identifica algunos chats con un id que no es un número de teléfono (grupos, alias, ids "linked device"), el normalizador de ids del canal los preserva tal cual y el handler de entrantes no intenta tratarlos como teléfono.
 5. **UTF-8 en la CLI de Windows.** Textos largos siempre por archivo UTF-8 sin BOM (`--body-file`), nunca por argumento.
 6. **Build limpio.** Se detiene el Host antes de `dotnet build` para evitar DLLs bloqueadas.
 

@@ -5,22 +5,22 @@ en orden) y aca se calcula DONDE va cada pixel, midiendo el texto.
 
 Spec de una pagina:
     {
-      "nombre": "3 · Envio de WhatsApp",
+      "nombre": "3 · Envio de notificacion",
       "tipo": "secuencia",
-      "titulo": "Envio de WhatsApp y recuperacion por Outbox",
+      "titulo": "Envio de notificacion y recuperacion por Outbox",
       "participantes": [
         {"id": "web", "titulo": "web-app", "color": "apoyo"},
-        {"id": "ctrl", "titulo": "WhatsAppController", "color": "principal"},
+        {"id": "ctrl", "titulo": "NotificacionController", "color": "principal"},
         {"id": "db", "titulo": "CoreDb", "forma": "cilindro"},
         {"id": "agente", "titulo": "Agente", "forma": "actor"}
       ],
       "pasos": [
         "[seccion Intento inmediato]",
-        "web -> ctrl: POST /WhatsApp/Enviar",
+        "web -> ctrl: POST /Notificacion/Enviar",
         "ctrl -> ctrl: Valida y normaliza",
         "[alt Envio confirmado]",
         "ctrl -> db: Guarda Mensaje Enviado",
-        "[else WAHA rechaza]",
+        "[else Proveedor externo rechaza]",
         "ctrl -> db: Guarda Mensaje + Outbox",
         "[end]",
         "ctrl --> web: 200 OK"

@@ -25,7 +25,7 @@ Este vault ya trae aplicado el primer enfoque (colores por grupo, en `.obsidian/
 > Los valores que figuraban antes acá (`0.12` / `0.9` / `13` / `195`) y los del checklist del final (`0.05` / `0.6` / `20` / `260`) **no coincidían entre sí ni con el archivo**. Se ajustan a mano desde la pestaña Forces y nadie volvió a anotarlos; la tabla de arriba es la que se leyó del archivo.
 
 > [!info] Un clúster que se ve apartado no siempre está desconectado
-> Si un grupo de notas aparece flotando lejos, antes de agregar enlaces conviene mirar **cuántos enlaces salientes** tienen. Un abanico de nodos que cuelga de un solo índice, con 1 entrante y 0 salientes cada uno, se dibuja lejos aunque esté conectado. Pasó con las 13 tarjetas de `docs/trello` el 2026-09-09: se resolvió dándoles navegación de vuelta, no tocando las fuerzas.
+> Si un grupo de notas aparece flotando lejos, antes de agregar enlaces conviene mirar **cuántos enlaces salientes** tienen. Un abanico de nodos que cuelga de un solo índice, con 1 entrante y 0 salientes cada uno, se dibuja lejos aunque esté conectado. Pasó con las tarjetas de `docs/tablero`: se resolvió dándoles navegación de vuelta, no tocando las fuerzas.
 
 ---
 
@@ -63,8 +63,8 @@ Este vault ya trae aplicado el primer enfoque (colores por grupo, en `.obsidian/
 ### 🟢 Verde `#10B981` — `contexto-negocio`
 Esquemas de BD, reglas de negocio e insumos transversales. Incluye `legacy-erd/`, `diagramas/` e `historico/`.
 
-### 🟠 Naranja `#F97316` — `docs/trello`
-Las 13 tarjetas del tablero más su índice.
+### 🟠 Naranja `#F97316` — `docs/tablero`
+Las tarjetas del tablero de tareas más su índice.
 
 ### 🔷 Cian `#06B5D4` — los repos de código
 - `api-core` · `web-app` · `api-contracts` · `api-people` · `api-auth` · `api-delivery` *(api-delivery agregado 2026-09-09: era el único de los 6 sin color)*
@@ -112,9 +112,9 @@ Estado al 2026-09-09, con el motivo de cada una:
 | `api-people/README.md` | Archivo de una línea (`# BackEndCore 8`), resto de la plantilla del repo. Se excluye en vez de borrarlo: el archivo vive en el repo de la organización y quitarlo exigiría un PR contra `develop` |
 
 > [!danger] El filtro que había y se quitó: `README.md`
-> Hasta el 2026-09-09 la lista excluía **todos** los `README.md`. Parecía inofensivo —tapaba el ruido de los repos— pero escondía los índices del propio vault: `contexto-negocio/README`, `docs/adr/README`, `docs/trello/README`, `docs/pruebas/README`.
+> Hasta el 2026-09-09 la lista excluía **todos** los `README.md`. Parecía inofensivo —tapaba el ruido de los repos— pero escondía los índices del propio vault: `contexto-negocio/README`, `docs/adr/README`, `docs/tablero/README`, `docs/pruebas/README`.
 >
-> Efecto en cascada: las 13 tarjetas de Trello, las 8 notas de `web-app/docs/review` y varias más **sólo tenían enlace entrante desde su índice**. Con el índice oculto quedaban flotando. Eran **26 nodos huérfanos** producidos por una sola línea de configuración.
+> Efecto en cascada: las tarjetas del tablero de tareas, varias notas de `web-app/docs/review` y otras más **sólo tenían enlace entrante desde su índice**. Con el índice oculto quedaban flotando. El total de nodos huérfanos que produjo una sola línea de configuración se contó en decenas.
 >
 > Se quitó, y con `node_modules` y `.venv` ya filtrados dejó de hacer falta. **Lección:** antes de excluir un patrón por nombre de archivo, revisar si ese nombre lo usan también las notas índice del vault.
 

@@ -26,7 +26,7 @@ Antes de revisar, lee lo que aplique (no todo cada vez):
 **Fase 0 — Entorno vivo primero.** Sin ver la pantalla real no recomiendas nada. Usa `tabs_context_mcp`; si hay una pestaña de la consola abierta y el orquestador te la indica, trabaja ahí; si no, abre una nueva en `http://localhost:5173`. Si no carga o pide login, **detente y repórtalo** (no escribas credenciales).
 Reglas de seguridad en la app viva: solo navegar, abrir menús, desplegar o colapsar secciones, pasar el mouse, cambiar tema y tamaño de ventana. **Nunca** enviar mensajes, guardar interacciones, crear o cerrar casos, editar o borrar notas, ni pulsar botones que disparen diálogos del navegador.
 
-**Fase 1 — Tarea principal (cognitive walkthrough).** Recorre el flujo real del agente: abrir un cliente desde el buscador → leer el historial → elegir caso → responder por WhatsApp → llenar el formulario de interacción (sin guardar). En cada paso: ¿intentará lo correcto?, ¿ve la acción?, ¿la asocia a su objetivo?, ¿ve el progreso? Estima KLM de las 3 tareas más frecuentes.
+**Fase 1 — Tarea principal (cognitive walkthrough).** Recorre el flujo real de quien opera el sistema: abrir un registro desde el buscador → leer el historial → elegir el caso → responder por el canal correspondiente → llenar el formulario de interacción (sin guardar). En cada paso: ¿intentará lo correcto?, ¿ve la acción?, ¿la asocia a su objetivo?, ¿ve el progreso? Estima KLM de las 3 tareas más frecuentes.
 
 **Fase 2 — Inventario por zona.** Barra superior, riel lateral, panel de contacto, panel central, panel de cuenta. Por zona cuenta: acciones primarias, bordes y tarjetas, colores de acento y de estado, tamaños de fuente, badges, texto permanente explicativo. Aplica el squint test con una captura reducida.
 

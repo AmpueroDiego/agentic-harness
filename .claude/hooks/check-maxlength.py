@@ -1,11 +1,12 @@
 """PostToolUse(Edit|Write) - aviso, no bloqueo.
 Regla 2 de mensajeria (CLAUDE.md): los identificadores de proveedores externos
-(Message-ID de correo, ids de WAHA) nunca van con nvarchar(100/200/255); van con
-450, el maximo indexable en SQL Server. Solo avisa: el agente decide.
+(Message-ID de correo, id de sesion de un canal de mensajeria) nunca van con
+nvarchar(100/200/255); van con 450, el maximo indexable en SQL Server. Solo
+avisa: el agente decide.
 Mensajes en ASCII puro: stderr en Windows es cp1252 y corrompe tildes/guiones."""
 import sys, json, re, os
 
-IDS = re.compile(r"(MessageId|Message_Id|ExternalId|IdExterno|WahaId|ProveedorId|"
+IDS = re.compile(r"(MessageId|Message_Id|ExternalId|IdExterno|ProviderId|ProveedorId|"
                  r"MensajeExternoId|CorrelationId|IdMensajeProveedor)", re.I)
 CORTO = re.compile(r"(HasMaxLength\(\s*(\d{1,3})\s*\)|maxLength:\s*(\d{1,3}))")
 

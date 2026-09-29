@@ -20,7 +20,7 @@ Maneja los archivos `REQ-NNNN-slug.md` de `requisitos/` — el "qué y por qué"
    - **Criterios (Gherkin)**: un escenario por comportamiento observable, con id `REQ-NNNN/E1`, `E2`... Dado/Cuando/Entonces.
    - **Preguntas abiertas**: lo que quedó sin decidir en la conversación. Vacío si no hay.
    - **Cambios**: fila única, versión 1, fecha de hoy, "Versión inicial", quién lo decidió.
-   - **Frontmatter**: `dueno` es el responsable del repo salvo que se diga otro; `origen` cita de dónde sale (ADR, fila de `TASKS.md`, la conversación misma); `modulo` los repos que toca; `adrs`/`prs`/`commits`/`trello`/`pantallas` vacíos si todavía no existen — no inventar valores.
+   - **Frontmatter**: `dueno` es el responsable del repo salvo que se diga otro; `origen` cita de dónde sale (ADR, fila de `TASKS.md`, la conversación misma); `modulo` los repos que toca; `adrs`/`prs`/`commits`/`tarjeta-tablero`/`pantallas` vacíos si todavía no existen — no inventar valores.
 3. **Mostrar el contenido completo en el chat y esperar aprobación** antes de escribir — un REQ va a dirigir trabajo de agentes más adelante, no se escribe a ciegas. (`estado: propuesto` ya marca que nadie lo aprobó todavía; esto es sobre el *contenido*, no sobre el estado.)
 4. **Escribir** en `requisitos/propuestas/REQ-NNNN-slug.md`.
 5. **Actualizar el índice** de `requisitos/README.md` (agregar la fila bajo "Todos en `propuestas/`, estado `propuesto`").

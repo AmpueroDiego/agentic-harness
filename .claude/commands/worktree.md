@@ -146,14 +146,14 @@ Reglas para armarla:
 
 **Probar en vivo desde un worktree**: los puertos son los mismos que en la carpeta principal (<PORT_CORE>, 5173…). Se levanta un solo Host a la vez; antes de `dotnet build` en otro worktree no hace falta frenar nada (cada carpeta tiene su propio `bin/`), pero sí antes de levantar un segundo Host en el mismo puerto.
 
-**Varias sesiones a la vez: un solo Host con canales activos** *(2026-09-11, pedido del responsable del repo: "si tenemos 2 sesiones o más usando WAHA, por si en algún momento se cruza")*. Los canales son recursos compartidos que ningún worktree aísla: el WAHA local (una sola sesión de WhatsApp, un solo webhook) y el buzón de correo de los `user-secrets` — el poller de api-core marca como leído (`Seen`) cada correo que registra, así que dos Hosts se roban los mensajes entre sí.
+**Varias sesiones a la vez: un solo Host con canales activos** *(pedido real de un responsable de repo: "si tenemos 2 sesiones o más usando el mismo canal externo, por si en algún momento se cruza")*. Los canales externos con estado propio (una integración de mensajería con una sola sesión activa y un solo webhook, un buzón de correo compartido) son recursos que ningún worktree aísla — si tu proyecto tiene uno, trátalo igual: el poller que lo consume marca como leído/procesado cada mensaje que registra, así que dos Hosts corriendo a la vez se roban los mensajes entre sí.
 - **Antes de levantar un Host**, cualquier sesión mira si ya hay otro: `netstat -ano | grep ":<PORT_CORE> " | grep LISTENING` y el `CommandLine` de ese PID (`powershell -NoProfile -Command "(Get-CimInstance Win32_Process -Filter 'ProcessId=<pid>').CommandLine"`), para saber de qué carpeta es.
 - **Si hay otro, no lo bajes**: puede ser de otra sesión o del responsable del repo. Díselo y pregunta cuál queda arriba.
-- Las pruebas de WhatsApp y correo se hacen **de a una sesión por vez**. Las que no tocan canales no necesitan Host: los tests unitarios ya simulan WAHA y correo.
+- Las pruebas contra un canal externo con estado propio se hacen **de a una sesión por vez**. Las que no tocan esos canales no necesitan Host: los tests unitarios ya los simulan.
 
-**WAHA: uno solo, compartido, y nunca desde un worktree** *(2026-09-11)*:
-- **Nunca `docker compose -f docker-compose.waha.yml up` dentro de un worktree.** Compose toma el nombre del proyecto de la carpeta: desde `api-core/` crea `api-core-waha-1`, pero desde `.worktrees/api-core--<slug>/` crearía otro contenedor con **otro volumen de sesiones, vacío** (WhatsApp sin vincular, hay que escanear el QR de nuevo) y chocaría en el puerto 3000. El WAHA local se levanta solo desde la carpeta principal `api-core/`.
+**Un canal externo con sesión propia: uno solo, compartido, y nunca desde un worktree** — si tu proyecto integra algo así (un servicio de mensajería con QR/pairing, una sesión de bot, etc.):
+- **Nunca levantes su propio `docker compose` dentro de un worktree.** Compose toma el nombre del proyecto de la carpeta: desde `api-core/` crea un contenedor, pero desde `.worktrees/api-core--<slug>/` crearía otro con **otro volumen de sesión, vacío** (hay que re-vincular/escanear de nuevo) y chocaría de puerto. Ese servicio se levanta solo desde la carpeta principal `api-core/`.
 - Sirve al único Host que esté levantado: el webhook de su sesión apunta al puerto <PORT_CORE>, que es el mismo en todos los worktrees.
-- Los tests no lo necesitan: unitarios con `Mock<IApiWahaService>`.
-- **Nunca apuntar un worktree al WAHA de la VM de Azure** (`<host-waha>`): es el de dev.
-- El número vinculado es real: una prueba de envío va solo a números propios.
+- Los tests no lo necesitan: unitarios con un mock del cliente del canal.
+- **Nunca apuntar un worktree a la instancia compartida de un ambiente remoto** (`<host-canal-externo>`): es la de dev, no un sandbox por worktree.
+- Si el canal envía a destinatarios reales, una prueba de envío va solo a destinatarios propios.

@@ -5,7 +5,7 @@ tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
 
-**Visión de dominio**: lee "Visión de dominio: expertos en CRM de atención postventa" en `AcmeOrg/CLAUDE.md`. Te toca de cerca en particular el punto 3 (facilidad para el agente humano): simple, visual, todo a la mano, menos clics — es la vara para decidir entre dos implementaciones de UI igual de correctas.
+**Visión de dominio**: lee la sección "Visión de dominio" en `AcmeOrg/CLAUDE.md` (la completa el equipo del proyecto). Si esa sección prioriza la facilidad para quien opera el sistema — simple, visual, todo a la mano, menos clics — es la vara para decidir entre dos implementaciones de UI igual de correctas.
 
 You are the Coder for `web-app`, the React/TypeScript frontend of the AcmeOrg CRM. You execute a plan handed to you by the orchestrator — you do not re-plan or second-guess scope; if the plan is ambiguous or wrong, report that back instead of improvising silently.
 
@@ -28,7 +28,7 @@ Los agregados del cliente (saldos, máximos, alertas) se calculan sobre la colec
 Si el repo tiene deuda conocida de este tipo, el plan la lista con `archivo:línea` verificado contra `origin/develop`. Un `items.find(...) ?? items[0]` es un fallback legítimo solo *después* de buscar por clave; agregar montos sobre `[0]` nunca lo es. Si tu plan toca ese archivo, corrígelos; si no, no los toques y menciónalos en tu reporte.
 La regla precisa es: `[0]` solo como fallback explícito después de buscar por clave — **nunca** para agregar montos.
 
-**2-8. El resto no lo repito acá para que no diverja (ya pasó una vez en este sistema).** Dos están en `AcmeOrg/CLAUDE.md`, que se autocarga ("Reglas permanentes" 5 y 6): decodificación de JWT sin `atob` pelado y aislamiento de sesión al cerrar sesión. Las otras cinco viven en `.claude/agents/adversary.md`, que **no** se autocarga — léelo antes de codificar (heurísticas 3-7): fidelidad de datos sin fallbacks inventados, verificación de autoría antes de mostrar controles de mutación, cero N+1 en el cliente, catálogos filtrados por `esActivo !== false`, y no asumir que el canal es WhatsApp.
+**2-8. El resto no lo repito acá para que no diverja (ya pasó una vez en este sistema).** Dos están en `AcmeOrg/CLAUDE.md`, que se autocarga ("Reglas permanentes" 5 y 6): decodificación de JWT sin `atob` pelado y aislamiento de sesión al cerrar sesión. Las otras cinco viven en `.claude/agents/adversary.md`, que **no** se autocarga — léelo antes de codificar (heurísticas 3-7): fidelidad de datos sin fallbacks inventados, verificación de autoría antes de mostrar controles de mutación, cero N+1 en el cliente, catálogos filtrados por `esActivo !== false`, y no asumir cuál es el canal externo activo.
 
 Lo único que agrego, porque es específico de este repo: para el JWT, **el decodificador correcto ya existe en el repo — reúsalo, no escribas otro**.
 

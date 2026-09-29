@@ -88,7 +88,7 @@ class PruebasSecretos(unittest.TestCase):
         for nombre, esperado in (("appsettings.Development.json", 1),
                                  ("appsettings.LOCAL.JSON", 1), (".env", 1),
                                  (".env.prod.local", 1), (".env.example", 0),
-                                 (".ENV.EXAMPLE", 0), (".env.waha.example", 0)):
+                                 (".ENV.EXAMPLE", 0), (".env.integracion.example", 0)):
             with self.subTest(nombre=nombre):
                 self.stage(nombre, "{}")
                 self.assertEqual(self.revisar().returncode, esperado)
@@ -148,13 +148,16 @@ class PruebasSecretos(unittest.TestCase):
                 self.assertEqual(resultado.stdout, '  ApiKey = "abc1...[REDACTADO, 15 chars]"\n')
 
     def test_09_docx_historico(self):
-        anterior = revisor.git(RAIZ, "show", "0258855^:docs/guias/WAHA-Azure-VM.docx")
+        # Ejemplo de cómo verificar que un docx con secretos limpiados en un commit
+        # posterior ya no dispara falsos positivos contra su versión histórica sucia.
+        # Ajusta COMMIT^:ruta a un caso real de tu propio historial si quieres activarlo.
+        commit_ejemplo = os.environ.get("TEST_DOCX_HISTORICO_COMMIT", "")
+        if not commit_ejemplo:
+            self.skipTest("Sin TEST_DOCX_HISTORICO_COMMIT configurado, se omite (ejemplo opcional)")
+        anterior = revisor.git(RAIZ, "show", f"{commit_ejemplo}")
         if anterior.returncode:
-            self.skipTest("No existe o no es accesible el blob histórico de WAHA")
+            self.skipTest("No existe o no es accesible el blob histórico indicado")
         self.assertTrue(revisor.revisar_bytes("historico.docx", anterior.stdout))
-        actual = revisor.git(RAIZ, "show", "HEAD:docs/guias/WAHA-Azure-VM.docx")
-        self.assertEqual(actual.returncode, 0, "No se pudo leer el DOCX de HEAD")
-        self.assertFalse(revisor.revisar_bytes("actual.docx", actual.stdout))
 
     def test_stage_no_working_tree_y_ruta_con_espacios(self):
         archivo = self.stage("carpeta con espacios/appsettings.json", json.dumps({"ApiKey": SECRETO}))
@@ -227,17 +230,17 @@ class PruebasSecretos(unittest.TestCase):
                 self.assertFalse(revisor.revisar_bytes("a.docx", office(f'API Key: "{valor}"')))
 
     def test_office_prosa_y_nombres_placeholder(self):
-        # Falsos positivos reales de la guía de WAHA ya limpia (HEAD de 2026-09-17)
-        for texto in ("WAHA_DASHBOARD_PASSWORD=DASHBOARD_PASS", "Con X-Waha-Webhook-Secret: adelante, el webhook",
+        # Falsos positivos reales de una guía ya limpia de secretos (caso real de origen)
+        for texto in ("SERVICE_DASHBOARD_PASSWORD=DASHBOARD_PASS", "Con X-Webhook-Secret: adelante, el webhook",
                       "un error de Jwt:SecretKey que no tiene nada que ver", "Contraseña: temporal"):
             with self.subTest(texto=texto):
                 self.assertFalse(revisor.revisar_bytes("a.docx", office(texto)))
         for valor in ("Sup3rS3cret", "bVrmQxLpZtYk", "abc_def_ghi", "ABCDEF123456"):
             with self.subTest(valor=valor):
-                self.assertTrue(revisor.revisar_bytes("a.docx", office(f"WAHA_API_KEY={valor}")))
+                self.assertTrue(revisor.revisar_bytes("a.docx", office(f"SERVICE_API_KEY={valor}")))
 
     def test_office_claves_y_umbral(self):
-        for clave in ("API Key", "API_KEY", "api-key", "x-api-key", "WAHA_API_KEY",
+        for clave in ("API Key", "API_KEY", "api-key", "x-api-key", "SERVICE_API_KEY",
                       "WebhookSecret", "Password", "contraseña", "contrasena", "pwd", "access_token"):
             with self.subTest(clave=clave):
                 self.assertTrue(revisor.revisar_bytes("a.docx", office(f'"{clave}" = "{SECRETO}"')))

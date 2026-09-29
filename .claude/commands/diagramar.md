@@ -93,21 +93,21 @@ marcos anidados y la numeración.
 {
   "nombre": "3 · Envío",
   "tipo": "secuencia",
-  "titulo": "Envío de WhatsApp: intento inmediato",
+  "titulo": "Envío de notificación: intento inmediato",
   "participantes": [
     {"id": "agente", "titulo": "Agente", "forma": "actor"},
-    {"id": "ctrl", "titulo": "WhatsAppController", "color": "apoyo"},
+    {"id": "ctrl", "titulo": "NotificacionController", "color": "apoyo"},
     {"id": "send", "titulo": "EnviarMensaje", "lineas": ["CommandHandler"], "color": "principal"},
     {"id": "db", "titulo": "CoreDb", "forma": "cilindro", "color": "neutro"}
   ],
   "pasos": [
     "[seccion Intento inmediato]",
-    "agente -> ctrl: POST /api/WhatsApp/Enviar",
+    "agente -> ctrl: POST /api/Notificacion/Enviar",
     "ctrl -> send: Handle(command)",
     "send -> send: Valida y normaliza",
     "[alt Envío confirmado]",
     "send -> db: Guarda Mensaje Enviado",
-    "[else WAHA rechaza]",
+    "[else Proveedor externo rechaza]",
     "send -> db: Guarda Mensaje + Outbox",
     "[end]",
     "send --> ctrl: MensajeViewModel"
@@ -125,8 +125,8 @@ marcos anidados y la numeración.
 
 Los mensajes se numeran solos (`1 · texto`). Las notas no existen, igual que en
 la grilla: el contexto va en `_apuntes_no_se_dibujan`. Si una página pasa de
-~35 mensajes, se parte en dos por una sección natural (el envío de WhatsApp
-quedó en "intento inmediato" y "procesamiento del Outbox").
+~35 mensajes, se parte en dos por una sección natural (el envío de la
+notificación quedó en "intento inmediato" y "procesamiento del Outbox").
 
 Formas de participante: `caja` (default), `cilindro`, `actor`. El `titulo`
 va en una línea y el detalle en `lineas`: la caja se mide por los dos.

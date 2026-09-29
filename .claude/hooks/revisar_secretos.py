@@ -126,8 +126,8 @@ def texto_xml(datos):
 
 
 def es_palabra(valor):
-    # Opción A (el responsable del repo, 2026-09-17). Se exime solo lo que en la guía de WAHA limpia daba falsos
-    # positivos: nombres de placeholder en MAYÚSCULAS ("DASHBOARD_PASS") y una palabra suelta corta
+    # Opción A (el responsable del repo, 2026-09-17). Se exime solo lo que en una guía ya limpia de
+    # secretos daba falsos positivos: nombres de placeholder en MAYÚSCULAS ("DASHBOARD_PASS") y una palabra suelta corta
     # ("adelante", "SecretKey"). Frases entre comillas y palabras largas siguen bloqueando aunque
     # sean solo letras ("correct horse battery staple", "abcdefghijklmnop").
     # No aplica a cadenas de conexión.
@@ -167,7 +167,8 @@ def revisar_bytes(nombre, datos):
     nombre = str(nombre)
     base = nombre.replace("\\", "/").rsplit("/", 1)[-1].lower()
     # .env y .env.<lo que sea> (incluido .env.prod.local), salvo plantillas terminadas en .example:
-    # api-core versiona .env.waha.example con placeholders y la regla previa de git-guard la dejaba pasar.
+    # es común versionar .env.<integracion>.example con placeholders, y la regla previa de git-guard
+    # ya las dejaba pasar.
     if (base in {"appsettings.development.json", "appsettings.local.json", ".env"}
             or (base.startswith(".env.") and not base.endswith(".example"))):
         return [hallazgo(nombre, "archivo prohibido")]
