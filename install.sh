@@ -187,6 +187,7 @@ copiar_arbol "$SOURCE/.claude/hooks"    "$TARGET/.claude/hooks"
 copiar_arbol "$SOURCE/.claude/scripts"  "$TARGET/.claude/scripts"
 copiar_arbol "$SOURCE/.claude/tools"    "$TARGET/.claude/tools"
 copiar_arbol "$SOURCE/profiles"         "$TARGET/.claude/profiles"
+copiar_arbol "$SOURCE/docs/guias"       "$TARGET/docs/guias"
 
 for f in CLAUDE.md AGENTS.md; do
     if [ -f "$TARGET/$f" ] && [ "$FORCE" -ne 1 ] && ! cmp -s "$STAGE/$f" "$TARGET/$f" 2>/dev/null; then

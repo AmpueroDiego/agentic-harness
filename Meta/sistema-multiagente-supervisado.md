@@ -1,7 +1,7 @@
 ---
 tipo: guia
-fecha: 2026-09-16
-tags: [guia, arquitectura, sdd, requisitos, conventional-commits, estructura-carpetas, buenas-practicas, multiagente, mcp, agentic-harness, grafo-conocimiento, harness, tokenmaxing, adversarial, chaos-engineering, mutation-testing, property-testing, contract-testing, system-auditor, worktrees, paralelismo, codex, ux-ui, minimalismo]
+fecha: 2026-09-29
+tags: [guia, arquitectura, sdd, requisitos, conventional-commits, estructura-carpetas, buenas-practicas, multiagente, mcp, agentic-harness, grafo-conocimiento, harness, tokenmaxing, adversarial, chaos-engineering, mutation-testing, property-testing, contract-testing, system-auditor, worktrees, paralelismo, codex, ux-ui, minimalismo, instalador, harness-ini]
 aliases:
   - Sistema Multiagente Supervisado con Aprendizaje Continuo
   - Sistema Multiagente Supervisado con Aprendizaje Continuo y Auditoría Adversarial
@@ -103,6 +103,9 @@ AcmeOrg/                      ← repo agentic-harness + vault de Obsidian
 ├── CLAUDE.md · AGENTS.md      reglas para cualquier sesión
 ├── TASKS.md                   un pedido = una fila, se agrega al empezar
 ├── Home.md · Meta/            dashboard y notas del sistema (esta)
+├── harness.ini(.example)      config por proyecto; el .ini real nunca se versiona
+├── install.sh · install.ps1   instalador/configurador (ver sección propia, abajo)
+├── profiles/                  perfiles de stack (dotnet, node-ts, python…) para coder/coder-web
 ├── .claude/
 │   ├── agents/                11 agentes     (junction agentes-pipeline/ para Obsidian)
 │   ├── commands/              10 comandos    (junction comandos-pipeline/)
@@ -113,7 +116,7 @@ AcmeOrg/                      ← repo agentic-harness + vault de Obsidian
 │   ├── runs/                  run docs, INDEX, RETRO-LOG, GOLDEN-TASKS, SYSTEM-AUDIT-LOG
 │   ├── adr/                   decisiones de arquitectura (única copia)
 │   ├── mockups/               maquetas HTML
-│   └── guias/                 playbook anti-regresiones y principios (retirados de la versión pública)
+│   └── guias/                 playbook anti-regresiones y principios de diseño, genéricos
 ├── contexto-negocio/          dominio, mapas para coders, investigaciones, propuestas (retirado)
 ├── scripts/                   validar-vault.py, pre-commit e instalador de hooks
 ├── requisitos/                REQ de SDD            ── local, fuera de git
@@ -126,6 +129,19 @@ AcmeOrg/                      ← repo agentic-harness + vault de Obsidian
 
 > [!warning] El checkout del vault lo comparten todas las sesiones
 > Dos sesiones abiertas en `AcmeOrg/` escriben sobre los mismos archivos. Ya pasó que una sesión commiteó cambios de otra. Antes de commitear: stagear por ruta **y** leer el diff de cada archivo.
+
+---
+
+## Cómo se conecta con `harness.ini` e `install.sh`
+
+Todo lo descrito en esta nota — los 11 agentes, los 10 comandos, los hooks, los tres motores, los modos de presupuesto — es **código versionado en este repo**, no algo que se reconstruye a mano en cada proyecto nuevo. `install.sh` / `install.ps1` (raíz del repo) son el mecanismo que lo lleva de acá a un proyecto destino:
+
+- **`harness.ini`** es la única pieza que cambia por proyecto: nombre, rama base, qué repos existen y su `stack_profile`, qué tracker/motor/MCP de base de datos están disponibles. Nunca lleva secretos — cada integración declara el *nombre* de la variable de entorno que los tiene.
+- El instalador copia `agents/`, `commands/`, `hooks/`, `scripts/`, `tools/` y `profiles/` al `.claude/` del destino, resolviendo los placeholders (`AcmeOrg`, la rama base) contra ese `harness.ini`, e instala el hook de revisión de secretos antes de cualquier commit.
+- **Todo lo que esta nota describe como "capa" (1 a 6) sigue existiendo aunque una integración falte**: sin tracker configurado, el Step 0.6 pide la tarjeta/ticket a mano en el chat en vez de resolverla contra un tablero vivo; sin Codex/Antigravity, los modos de presupuesto corren solo con Claude y lo dicen en el reporte; sin MCP de base de datos, `planner`/`analyst` trabajan con lo que puedan leer del código. Ninguna integración faltante rompe el pipeline — lo degrada de forma explícita, nunca en silencio.
+- Los **perfiles de stack** (`profiles/`) son la pieza que evita reescribir a mano las convenciones de `coder`/`coder-web` (o `coder-ui`) en cada proyecto: cada `[repo:<id>]` de `harness.ini` declara su `stack_profile`, y ese archivo trae las "hard rules" concretas del stack — hoy hay ejemplos para .NET, Node/TypeScript y Python.
+
+En otras palabras: esta nota documenta **el sistema**; `harness.ini.example` y el instalador documentan **cómo se lo hace propio**. Uno no reemplaza al otro — el README del repo tiene el quick start completo.
 
 ---
 
@@ -198,7 +214,7 @@ decisión del responsable ─► /requisitos redacta REQ ─► confirmación �
 | Agente | Modelo | Por qué |
 |---|---|---|
 | `architect` | Sonnet | Compara contra los repos hermanos y el planner re-verifica todo lo que dice |
-| `planner` | Sonnet, escalable a Opus (Step 2.7) | Tiene una sola pasada; Opus solo si el Step 2.5 o el 2.6 ya marcaron riesgo o tamaño |
+| `planner` | El modelo más capaz disponible (Step 2.7) | Tiene una sola pasada: es el punto único de falla que más vale pagar. Antes escalaba solo si un paso previo marcaba riesgo; se volvió fijo al ver que la sola pasada, no el tamaño de la tarea, es lo que lo hace caro de equivocar |
 | `coder` / `coder-web` | Sonnet | Ejecutan un plan cerrado y QA revisa después. `coder-web` existe desde que dos corridas editaron React con el coder de C# |
 | `qa` | Sonnet | Mucho trabajo procedural; en el razonamiento fino rindió bien |
 | `adversary` | Sonnet | Auditor destructivo sobre el diff: 6 vectores de ataque y mutación mental |

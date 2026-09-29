@@ -52,6 +52,7 @@ Agentes independientes, fuera del pipeline: `analyst` (preguntas de datos, solo 
 ├── settings.json  permisos (allow / ask / deny) y hooks del proyecto
 └── launch.json    ejemplo de configuraciones de arranque del frontend
 .agents/skills/security/   catálogo CWE/OWASP que carga la revisión de seguridad
+docs/guias/                playbook anti-regresiones, principios minimalistas, detección de code smells (genéricos)
 scripts/                   pre-commit (secretos + vault), instalador de hooks, validar-vault.py
 profiles/                  perfiles de stack (dotnet, node-ts, python) que alimentan coder/coder-ui
 Meta/                      documentación del sistema multiagente y de la configuración del vault
@@ -84,7 +85,8 @@ El instalador:
 Es idempotente (correr dos veces no cambia nada de más) y no destructivo
 (nunca sobrescribe sin backup, salvo `--force`). Después de instalar, quedan
 tres cosas manuales que el instalador no adivina por vos:
-- **Los nombres reales de tus repos.** Los placeholders son `api-core`, `api-contracts`, `api-people`, `api-auth`, `api-delivery`, `web-app`; un `grep -rl api-core .claude` te da los puntos de contacto. Los roles (BFF, IdP, frontend) sí importan: `coder` trae de ejemplo convenciones .NET/EF Core y `coder-web` React/TypeScript — ver "Perfiles de stack" abajo para no reescribirlas a mano.
+- **Los nombres reales de tus repos.** Los placeholders son `api-core`, `api-contracts`, `api-people`, `api-auth`, `api-delivery`, `web-app`; un `grep -rl api-core .claude` te da los puntos de contacto. Los roles (BFF, IdP, frontend) sí importan: `coder` trae de ejemplo convenciones .NET/EF Core y `coder-web` React/TypeScript.
+- **Pegar el perfil de stack elegido dentro del agente.** El instalador copia `profiles/` a `.claude/profiles/` como referencia, pero **no** inyecta su contenido en la sección "Stack real" de `coder`/`coder-web` — eso hoy es un paso manual (copiar/pegar el `.md` del perfil que corresponda). Ver "Perfiles de stack" abajo.
 - **La sección "Visión de dominio" de `CLAUDE.md`.** Los seis agentes del pipeline la leen antes de diseñar; llega vacía a propósito — es lo único que de verdad no se puede genérica.
 - **Vaciar y empezar a llenar la memoria**, si vas a usar el vault de Obsidian: `docs/runs/INDEX.md`, `RETRO-LOG.md`, `GOLDEN-TASKS.md`, `docs/adr/`. El Step 5 de `/orquestar` escribe el run doc; corré `retro` cada 3-5 corridas y `system-auditor` cada ~10.
 
@@ -114,7 +116,24 @@ Los secretos de cada integración (tokens, PATs, API keys) nunca van en
 las convenciones y "hard rules" que un `coder`/`coder-ui` necesita para ese
 stack. `harness.ini` declara `stack_profile = <nombre>` por repo; si tu
 stack no está entre los tres, copiá `profiles/_plantilla.md` y escribí el
-tuyo — ver `profiles/README.md`.
+tuyo — ver `profiles/README.md`. El instalador los deja copiados en
+`.claude/profiles/`; pegar el contenido del que corresponda dentro de la
+sección "Stack real" de `coder`/`coder-web` (o `coder-ui`) es hoy un paso
+manual, no algo que `install.sh` haga por vos.
+
+## Guías genéricas (`docs/guias/`)
+
+Tres documentos de referencia, reescritos desde cero en genérico a partir de
+un playbook real de producción — sin nombres de repos, fechas ni datos de
+negocio del proyecto original:
+
+- [`PLAYBOOK-ANTI-REGRESIONES-Y-LECCIONES-APRENDIDAS.md`](docs/guias/PLAYBOOK-ANTI-REGRESIONES-Y-LECCIONES-APRENDIDAS.md): 24 reglas de oro contra errores reales (config con placeholders, CORS, migraciones que no se auto-aplican, defensas que no defienden, tamaño de PR, etc.), citado por `CLAUDE.md` y por los agentes del pipeline.
+- [`PRINCIPIOS-INGENIERIA-MINIMALISTA.md`](docs/guias/PRINCIPIOS-INGENIERIA-MINIMALISTA.md): el algoritmo de 5 pasos (cuestionar, borrar, simplificar, acelerar, automatizar) aplicado al propio pipeline de agentes, con fuentes primarias citadas.
+- [`DETECCION-CODE-SMELLS.md`](docs/guias/DETECCION-CODE-SMELLS.md): qué smells detecta un analizador estático (Sonar, Meziantou, ESLint) y cuáles solo atrapa la revisión humana.
+
+Agregá los tuyos con el mismo formato a medida que tu equipo los descubra —
+la sección 19 del playbook explícitamente pide citar la fuente única, no
+copiarla dentro de cada agente.
 
 ## Sobre esta versión
 

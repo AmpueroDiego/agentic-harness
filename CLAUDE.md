@@ -41,9 +41,9 @@ Bloque de ejemplo — reemplázalo por tus repos. Los agentes asumen un BFF que 
 ## Playbook
 
 > [!IMPORTANT]
-> Antes de implementar o modificar código, consultar el playbook anti-regresiones del proyecto — catálogo de reglas de oro contra errores comunes, cada una nacida de una regresión real. Sin número de reglas acá: ya se desfasó una vez. *(El playbook original se retiró de la versión pública porque cada regla citaba código del cliente; en tu adaptación, mantén uno en `docs/guias/` y cítalo desde acá.)*
+> Antes de implementar o modificar código, consultar [`docs/guias/PLAYBOOK-ANTI-REGRESIONES-Y-LECCIONES-APRENDIDAS.md`](docs/guias/PLAYBOOK-ANTI-REGRESIONES-Y-LECCIONES-APRENDIDAS.md) — catálogo de reglas de oro contra errores comunes, cada una nacida de una regresión real (versión genérica, sin datos del cliente original). Sin número fijo de reglas citado acá a propósito: ya se desfasó una vez. Agrega tus propias reglas ahí a medida que tu equipo las descubra.
 
-**Principios de diseño (desde el 2026-09-17):** KISS, YAGNI, DRY y SOLID, con los cinco síntomas que ya aparecieron acá (fat controller, Smart UI, validación solo del lado del cliente, cajón de sastre, modelo ajeno filtrado hacia adentro). **La regla que manda: si lo que vas a tocar ya está mal, se arregla primero y en un commit aparte; no se construye encima.** Lo que no entre en el alcance se reporta con `archivo:línea` y se registra en `TASKS.md` con su tarjeta.
+**Principios de diseño:** KISS, YAGNI, DRY y SOLID, con los cinco síntomas de la sección 19 del playbook (fat controller, Smart UI, validación solo del lado del cliente, cajón de sastre, modelo ajeno filtrado hacia adentro) — detalle y ejemplos en [`docs/guias/PRINCIPIOS-INGENIERIA-MINIMALISTA.md`](docs/guias/PRINCIPIOS-INGENIERIA-MINIMALISTA.md). **La regla que manda: si lo que vas a tocar ya está mal, se arregla primero y en un commit aparte; no se construye encima.** Lo que no entre en el alcance se reporta con `archivo:línea` y se registra en `TASKS.md` con su tarjeta.
 
 De ahí, la que más cuesta cuando se olvida: **ninguna API auto-migra**. Una migración de EF Core no se aplica sola al desplegar; el fallo es silencioso.
 

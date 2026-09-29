@@ -188,6 +188,7 @@ Copy-Tree (Join-Path $Source ".claude\hooks")    (Join-Path $Target ".claude\hoo
 Copy-Tree (Join-Path $Source ".claude\scripts")  (Join-Path $Target ".claude\scripts")
 Copy-Tree (Join-Path $Source ".claude\tools")    (Join-Path $Target ".claude\tools")
 Copy-Tree (Join-Path $Source "profiles")         (Join-Path $Target ".claude\profiles")
+Copy-Tree (Join-Path $Source "docs\guias")       (Join-Path $Target "docs\guias")
 
 foreach ($f in @("CLAUDE.md", "AGENTS.md")) {
     $src = Join-Path $Stage $f
