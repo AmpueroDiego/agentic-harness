@@ -1,0 +1,203 @@
+<title>Rondas de Codex</title>
+<!--REFRESH-->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Concepto: tablero de mesa de control. Los PR se ordenan por urgencia ponderada; cada fila muestra sus rondas como casillas. */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --ink: #16222e;
+  --ink-2: #4a5a69;
+  --ink-3: #6b7b8a;
+  --line: #d9e0e6;
+  --clean: #0f766e;
+  --clean-bg: #d6efec;
+  --hall: #b45309;
+  --hall-bg: #fbe6cc;
+  --none: #64748b;
+  --none-bg: #e6eaee;
+  --run: #2563eb;
+  --run-bg: #dce7fb;
+  --bar: #16222e;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f171f; --surface: #17222c; --ink: #e6edf3; --ink-2: #a9b8c6; --ink-3: #8a9aa9; --line: #2a3947;
+    --clean: #4fd1c5; --clean-bg: #12403c; --hall: #f0a95a; --hall-bg: #4a3316;
+    --none: #9aa8b6; --none-bg: #26323d; --run: #7ea8ff; --run-bg: #1c2f57; --bar: #e6edf3;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f171f; --surface: #17222c; --ink: #e6edf3; --ink-2: #a9b8c6; --ink-3: #8a9aa9; --line: #2a3947;
+  --clean: #4fd1c5; --clean-bg: #12403c; --hall: #f0a95a; --hall-bg: #4a3316;
+  --none: #9aa8b6; --none-bg: #26323d; --run: #7ea8ff; --run-bg: #1c2f57; --bar: #e6edf3;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); padding-inline: 16px; padding-block: 24px 40px; line-height: 1.45; }
+.wrap { max-width: 980px; margin-inline: auto; }
+h1 { font-size: 1.6rem; margin: 0 0 4px; font-weight: 600; text-wrap: balance; }
+h2 { font-size: 1.05rem; margin: 0 0 4px; font-weight: 600; }
+.sub { color: var(--ink-2); margin: 0 0 20px; max-width: 65ch; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.kpis { display: flex; flex-wrap: wrap; gap: 24px 40px; padding: 14px 0 20px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+.kpi b { display: block; font-family: var(--mono); font-size: 1.7rem; font-weight: 500; }
+.kpi span { color: var(--ink-2); font-size: .82rem; }
+section { margin-bottom: 32px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: .82rem; color: var(--ink-2); margin: 8px 0 14px; }
+.legend i { display: inline-block; width: 18px; height: 18px; border-radius: 3px; vertical-align: -4px; margin-right: 6px; text-align: center; font: 500 .7rem/18px var(--mono); font-style: normal; }
+.row { display: grid; grid-template-columns: 28px minmax(96px, 130px) 1fr minmax(120px, 220px); gap: 8px 16px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.row.head { color: var(--ink-3); font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; border-top: 0; padding-bottom: 4px; }
+.rank { font-family: var(--mono); color: var(--ink-3); }
+.pr { font-weight: 600; }
+.pr small { display: block; font-weight: 400; color: var(--ink-2); font-size: .78rem; }
+.cells { display: flex; gap: 4px; flex-wrap: wrap; min-width: 0; }
+.cell { width: 30px; height: 30px; border-radius: 4px; font: 500 .72rem/30px var(--mono); text-align: center; }
+.cell.limpia { background: var(--clean-bg); color: var(--clean); }
+.cell.hallazgos { background: var(--hall-bg); color: var(--hall); }
+.cell.sinresp { background: var(--none-bg); color: var(--none); background-image: repeating-linear-gradient(135deg, transparent 0 4px, rgba(100,116,139,.25) 4px 5px); }
+.cell.curso { background: var(--run-bg); color: var(--run); outline: 1.5px dashed var(--run); outline-offset: -2px; }
+.cell.libre { background: transparent; outline: 1px solid var(--line); outline-offset: -1px; color: transparent; }
+.cells .sep { width: 1px; background: var(--line); margin-inline: 4px; }
+.score { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.track { flex: 1; height: 10px; background: var(--none-bg); border-radius: 2px; overflow: hidden; }
+.fill { height: 100%; background: var(--bar); border-radius: 2px; }
+.score b { font-family: var(--mono); font-weight: 500; min-width: 2ch; text-align: right; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 10px 7px 0; border-top: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink-3); font-weight: 500; font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; border-top: 0; }
+.scroll { overflow-x: auto; }
+.pbars { display: grid; gap: 8px; }
+.pb { display: grid; grid-template-columns: 90px 1fr 36px; gap: 10px; align-items: center; font-size: .9rem; }
+.note { color: var(--ink-2); font-size: .85rem; max-width: 70ch; }
+@media (max-width: 640px) {
+  .row { grid-template-columns: 24px 1fr; }
+  .row.head { display: none; }
+  .row .cells, .row .score { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: no-preference) { .fill { transition: width .4s ease; } }
+</style>
+
+<div class="wrap">
+  <h1>Rondas de Codex por PR</h1>
+  <p class="sub">Cuántas veces ha revisado Codex cada PR del CRM, qué prioridad tuvo cada hallazgo y qué PR conviene atender primero. Actualizado: <span class="mono" id="stamp">/*STAMP*/</span>.</p>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section>
+    <h2>Orden de atención</h2>
+    <p class="note">De más a menos urgente, según el ponderado (más abajo se explica). Cada casilla es una ejecución de <span class="mono">@codex review</span>; el tope es 8 por PR y hacen falta 2 limpias seguidas.</p>
+    <div class="legend">
+      <span><i class="cell limpia">✓</i>Limpia</span>
+      <span><i class="cell hallazgos">P2</i>Con hallazgos (con su prioridad)</span>
+      <span><i class="cell sinresp">!</i>Sin respuesta de Codex</span>
+      <span><i class="cell curso">…</i>En curso</span>
+    </div>
+    <div class="row head"><span>#</span><span>PR</span><span>Rondas (tope 8)</span><span>Urgencia ponderada</span></div>
+    <div id="rows"></div>
+  </section>
+
+  <section class="card">
+    <h2>Hallazgos por prioridad</h2>
+    <p class="note">Acumulado desde que empezó <span class="mono">/supercodex</span>. Los avisos de seguridad se cuentan aparte.</p>
+    <div class="pbars" id="pbars"></div>
+  </section>
+
+  <section class="card">
+    <h2>Cómo se calcula el ponderado</h2>
+    <p class="note">Urgencia = 3 × (peso de los hallazgos aún no comprobados como resueltos) + limpias que faltan + 1 si la última ronda no respondió. Un hallazgo cuenta hasta que una ronda limpia posterior lo confirme, aunque ya esté corregido. Ante un empate, va primero el PR con más rondas usadas.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Concepto</th><th>Peso</th></tr></thead>
+        <tbody>
+          <tr><td>Hallazgo P0 (bloqueante)</td><td class="mono">8</td></tr>
+          <tr><td>Hallazgo P1 (alto)</td><td class="mono">4</td></tr>
+          <tr><td>Hallazgo P2 (medio)</td><td class="mono">2</td></tr>
+          <tr><td>Hallazgo P3 (bajo)</td><td class="mono">1</td></tr>
+          <tr><td>Aviso de seguridad Medium</td><td class="mono">2</td></tr>
+          <tr><td>Cada limpia que falta para llegar a 2</td><td class="mono">1</td></tr>
+          <tr><td>Última ronda sin respuesta</td><td class="mono">1</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+// Hallazgos: prioridad P0-P3 o "SEG" para avisos de seguridad Medium. r: limpia | hallazgos | sinresp | curso
+var PRS = /*DATA*/[];
+var PESO = { P0: 8, P1: 4, P2: 2, P3: 1, SEG: 2 };
+var LISTAS = 2, TOPE = 8;
+
+function seguidas(rondas) {
+  var s = 0;
+  for (var i = 0; i < rondas.length; i++) {
+    if (rondas[i].r === "limpia") s++;
+    else if (rondas[i].r === "hallazgos") s = 0;
+  }
+  return s;
+}
+function ultimaRespondida(rondas) {
+  for (var i = rondas.length - 1; i >= 0; i--) if (rondas[i].r !== "curso") return rondas[i];
+  return null;
+}
+PRS.forEach(function (p) {
+  p.seg = seguidas(p.rondas);
+  var pesoAbiertos = p.abiertos.reduce(function (a, k) { return a + PESO[k]; }, 0);
+  var u = ultimaRespondida(p.rondas);
+  p.urgencia = 3 * pesoAbiertos + Math.max(0, LISTAS - p.seg) + (u && u.r === "sinresp" ? 1 : 0);
+});
+PRS.sort(function (a, b) { return b.urgencia - a.urgencia || b.rondas.length - a.rondas.length || a.n - b.n; });
+
+function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+
+var max = Math.max.apply(null, PRS.map(function (p) { return p.urgencia; })) || 1;
+var rows = document.getElementById("rows");
+PRS.forEach(function (p, i) {
+  var row = el("div", "row");
+  row.appendChild(el("span", "rank", String(i + 1)));
+  row.appendChild(el("div", "pr", esc(p.repo) + " #" + p.n + "<small>" + esc(p.tema) + "</small>"));
+  var cells = el("div", "cells");
+  for (var k = 0; k < TOPE; k++) {
+    var ronda = p.rondas[k], c;
+    if (!ronda) c = el("span", "cell libre", "·");
+    else if (ronda.r === "limpia") { c = el("span", "cell limpia", "✓"); c.title = "Ronda " + (k + 1) + ": limpia"; }
+    else if (ronda.r === "hallazgos") { c = el("span", "cell hallazgos", esc(ronda.f.map(function (f) { return f === "SEG" ? "S" : f; }).join("+"))); c.title = "Ronda " + (k + 1) + ": hallazgos " + ronda.f.join(", ") + (ronda.nota ? " (" + ronda.nota + ")" : ""); }
+    else if (ronda.r === "sinresp") { c = el("span", "cell sinresp", "!"); c.title = "Ronda " + (k + 1) + ": Codex no respondió"; }
+    else { c = el("span", "cell curso", "…"); c.title = "Ronda " + (k + 1) + ": en curso"; }
+    cells.appendChild(c);
+  }
+  row.appendChild(cells);
+  var sc = el("div", "score");
+  var tr = el("div", "track"); var f = el("div", "fill"); f.style.width = Math.round(100 * p.urgencia / max) + "%"; tr.appendChild(f);
+  sc.appendChild(tr); sc.appendChild(el("b", null, String(p.urgencia)));
+  sc.title = p.seg + " de " + LISTAS + " limpias seguidas";
+  row.appendChild(sc);
+  rows.appendChild(row);
+});
+
+var listos = PRS.filter(function (p) { return p.seg >= LISTAS; }).length;
+var limpias = PRS.reduce(function (a, p) { return a + p.rondas.filter(function (r) { return r.r === "limpia"; }).length; }, 0);
+var total = PRS.reduce(function (a, p) { return a + p.rondas.length; }, 0);
+var hall = PRS.reduce(function (a, p) { return a + p.rondas.filter(function (r) { return r.r === "hallazgos"; }).length; }, 0);
+var kp = document.getElementById("kpis");
+[[listos + " / " + PRS.length, "PR listos (2 limpias seguidas)"], [String(total), "ejecuciones de Codex"], [String(limpias), "rondas limpias"], [String(hall), "rondas con hallazgos"]].forEach(function (k) {
+  kp.appendChild(el("div", "kpi", "<b>" + k[0] + "</b><span>" + k[1] + "</span>"));
+});
+
+var conteo = { P0: 0, P1: 0, P2: 0, P3: 0, SEG: 0 };
+PRS.forEach(function (p) { p.rondas.forEach(function (r) { (r.f || []).forEach(function (k) { conteo[k]++; }); }); });
+var maxC = Math.max(1, conteo.P0, conteo.P1, conteo.P2, conteo.P3, conteo.SEG);
+var pb = document.getElementById("pbars");
+[["P0", "P0 bloqueante"], ["P1", "P1 alto"], ["P2", "P2 medio"], ["P3", "P3 bajo"], ["SEG", "Seguridad"]].forEach(function (x) {
+  var r = el("div", "pb");
+  r.appendChild(el("span", null, x[1]));
+  var tr = el("div", "track"); var f = el("div", "fill"); f.style.width = Math.round(100 * conteo[x[0]] / maxC) + "%"; tr.appendChild(f);
+  r.appendChild(tr); r.appendChild(el("b", "mono", String(conteo[x[0]])));
+  pb.appendChild(r);
+});
+</script>
