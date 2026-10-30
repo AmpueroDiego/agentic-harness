@@ -32,6 +32,12 @@ if ! "$PY" "$RAIZ/.claude/hooks/revisar_secretos.py" --repo "$REPO"; then
     exit 1
 fi
 
+# Sistema multiagente: con Codex o Antigravity no corren los hooks de Claude; esto sí.
+if ! "$PY" "$RAIZ/.claude/scripts/verificar-sistema.py"; then
+    echo "BLOQUEADO [pre-commit]: sistema multiagente inconsistente (ver arriba)." >&2
+    exit 1
+fi
+
 echo "🔍 [pre-commit] Validando integridad del Vault de Obsidian..."
 
 PYTHON_CMD=""

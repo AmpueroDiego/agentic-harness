@@ -28,3 +28,20 @@ Esto es propio de este archivo — `CLAUDE.md` no lo repite.
 - **Frontmatter YAML obligatorio** en toda nota nueva (corrida, ADR, guía, contexto, tarjeta) con `tipo:`, `fecha:` si aplica y `tags: [...]`, para que Dataview y Graph View la indexen.
 - **Cero notas huérfanas:** toda nota nueva se enlaza en su índice padre (`Home.md`, `docs/adr/README.md`, `contexto-negocio/README.md` o `docs/runs/INDEX.md`).
 - **Validación:** `python scripts/validar-vault.py` antes de cerrar cualquier tarea de documentación. Falla (código 1) solo por nombres corruptos, mojibake, wikilinks con pipe escapado o huérfanas que deja el commit; los enlaces rotos y las huérfanas previas salen como aviso con código 0. **No revisa frontmatter ni `kebab-case`** (aunque su docstring lo diga): esas dos reglas se cumplen a mano.
+
+## 3. Si te abrieron con Codex o Antigravity (no con Claude)
+
+El sistema vive en `.claude/` y se orquesta igual con cualquier motor. Solo cambia cómo se llama a cada pieza.
+
+| En Claude | Desde Codex o Antigravity |
+|---|---|
+| `/orquestar`, `/worktree`, `/codex`… | Skill del mismo nombre en `.agents/skills/`: cada uno apunta a su `.claude/commands/<nombre>.md`, la única fuente |
+| Herramienta `Agent` con `planner`, `qa`, `adversary`… | `bash .claude/scripts/agente.sh <agente> <prompt.md> <salida.md> [raíz]` |
+| Memoria del usuario | `~/.claude/projects/<carpeta-del-proyecto>/memory/MEMORY.md` y lo que aplique |
+| Bases por MCP | Solo conectadas en Claude: `MOTOR=claude bash .claude/scripts/agente.sh analyst …` |
+| Hook `git-guard.sh` | No corre fuera de Claude: cumplir sus reglas a mano (PR siempre contra la rama base, nunca push a la rama principal ni `--force`) |
+
+**Motor por llamada:** `agente.sh` usa `MOTOR=claude|codex|agy`; sin `MOTOR` va con Codex, salvo agentes con herramientas MCP (van con Claude). Los agentes de solo lectura con Antigravity corren sobre una copia `git archive` temporal y necesitan una regla `autoMode.allow` del usuario.
+
+**Al agregar o renombrar un comando** en `.claude/commands/` o un skill en `.claude/skills/`, correr `python .claude/scripts/generar-skills-codex.py`; nunca editar `.agents/skills/*` a mano. El `pre-commit` corre con cualquier motor: `verificar-sistema.py` bloquea si los skills de Codex quedaron viejos o un agente no tiene `name` (igual al archivo), `description` y `tools`.
+
