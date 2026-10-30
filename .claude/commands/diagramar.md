@@ -1,14 +1,16 @@
 ---
 description: Genera diagramas .drawio a partir de una especificación JSON, con layout calculado y validación anti-solapamientos. También audita los .drawio existentes.
+tipo: comando
+fecha: 2026-10-30
+tags: [harness]
 ---
 
 # /diagramar
 
 Produce diagramas `.drawio` para `AcmeOrg/` sin escribir coordenadas a mano.
 
-**Regla dura: está prohibido escribir XML de draw.io a mano.** Ya se hizo una vez
-(2026-09-09) y salieron 7 solapamientos en 3 páginas: etiquetas de flecha encima
-de cajas ajenas y flechas atravesando nodos. El XML lo emite `generar.py`; el ojo
+**Regla dura: está prohibido escribir XML de draw.io a mano.** A mano salen
+solapamientos: etiquetas de flecha encima de cajas ajenas y flechas atravesando nodos. El XML lo emite `generar.py`; el ojo
 humano no mide texto y yo tampoco.
 
 ## Herramientas
@@ -35,7 +37,7 @@ python previsualizar.py ../../../contexto-negocio/diagramas/<nombre>/<nombre>.dr
 
 1. Escribir/editar el `.diagrama.json` (la fuente de verdad).
 
-   **Borrador delegado para un diagrama parecido a uno existente** *(agregado 2026-09-18, ver [`/shunt`](shunt.md))*: en vez de escribir el JSON a mano desde cero, `code-write.sh --reference <existente>.diagrama.json --target <nuevo>.diagrama.json --spec "<participantes/nodos/pasos/conexiones>"`. El `--spec` tiene que traer las decisiones de contenido reales — quién decide qué muestra el diagrama seguís siendo vos, `agy` solo lo codifica en el schema. Los pasos 2-6 de abajo siguen obligatorios sin cambios: ahí está la verificación real, no en este script.
+   **Borrador delegado para un diagrama parecido a uno existente** (ver [`/shunt`](shunt.md)): en vez de escribir el JSON a mano desde cero, `code-write.sh --reference <existente>.diagrama.json --target <nuevo>.diagrama.json --spec "<participantes/nodos/pasos/conexiones>"`. El `--spec` tiene que traer las decisiones de contenido reales — quién decide qué muestra el diagrama seguís siendo vos, `agy` solo lo codifica en el schema. Los pasos 2-6 de abajo siguen obligatorios sin cambios: ahí está la verificación real, no en este script.
 2. `generar.py`.
 3. `validar.py`. **Si sale distinto de `Total de errores: 0`, no se entrega.**
    Se ajusta el JSON — mover un nodo de celda, acortar una etiqueta — y se vuelve al paso 2.
@@ -49,12 +51,11 @@ vuelve a ser XML a mano.
 
 ### Los SVG se versionan, no se descartan
 
-*(Práctica pedida por el responsable del repo, 2026-09-09.)* Cada vez que se regenera un
+Cada vez que se regenera un
 diagrama, los SVG de todas sus páginas se regeneran también y quedan
 comiteados, con el nombre `<archivo>--<pagina>.svg`.
 
-**Cada diagrama tiene su carpeta**, con todo lo suyo junto *(el responsable del repo,
-2026-09-10; hasta ese día los SVG iban en un `svg/` aparte)*:
+**Cada diagrama tiene su carpeta**, con todo lo suyo junto:
 
 ```
 contexto-negocio/diagramas/<nombre>/
@@ -83,7 +84,7 @@ SVG y el `.drawio` discrepan, manda el `.diagrama.json`.
 
 ## Páginas de secuencia
 
-*(Agregado 2026-09-10, para migrar los `.puml` de api-core.)* Una página con
+Una página con
 `"tipo": "secuencia"` no usa la grilla: declara participantes y pasos en orden,
 y `secuencia.py` calcula el resto — la separación entre participantes según la
 etiqueta más larga que tiene que pasar entre ellos, el apilado vertical, los
@@ -93,7 +94,7 @@ marcos anidados y la numeración.
 {
   "nombre": "3 · Envío",
   "tipo": "secuencia",
-  "titulo": "Envío de notificación: intento inmediato",
+  "titulo": "Envío de Notificacion: intento inmediato",
   "participantes": [
     {"id": "agente", "titulo": "Agente", "forma": "actor"},
     {"id": "ctrl", "titulo": "NotificacionController", "color": "apoyo"},
@@ -125,8 +126,8 @@ marcos anidados y la numeración.
 
 Los mensajes se numeran solos (`1 · texto`). Las notas no existen, igual que en
 la grilla: el contexto va en `_apuntes_no_se_dibujan`. Si una página pasa de
-~35 mensajes, se parte en dos por una sección natural (el envío de la
-notificación quedó en "intento inmediato" y "procesamiento del Outbox").
+~35 mensajes, se parte en dos por una sección natural (el envío de Notificacion
+quedó en "intento inmediato" y "procesamiento del Outbox").
 
 Formas de participante: `caja` (default), `cilindro`, `actor`. El `titulo`
 va en una línea y el detalle en `lineas`: la caja se mide por los dos.
@@ -145,7 +146,7 @@ cruzan** sin que uno contenga al otro (marcos mal anidados, grupos que se invade
 
 ## Contenedores, carriles y cajas rellenas (roadmaps)
 
-*(Agregado 2026-09-16 para el roadmap por semanas.)* Tres opciones, todas
+Tres opciones, todas
 opt-in: sin ellas, el generador sigue dibujando bandas planas y cajas blancas.
 
 - **`"grupos_contenedores": true`** en la página (o `"contenedor": true` en un
@@ -159,13 +160,8 @@ opt-in: sin ellas, el generador sigue dibujando bandas planas y cajas blancas.
 - **`"cajas_rellenas": true`** en la página pinta la caja entera con un tinte
   del acento y borde de 2px, sin barra superior; `"punteado": true` en un nodo
   la deja con borde discontinuo. Acentos de estado para esto: `hecho` (verde),
-  `curso` (ámbar), `pendiente` (gris). En los grupos, `"relleno"` y
+  `curso` (ámbar), `pendiente` (gris). En los grupos, `"fondo"` y
   `"titulo_color"` (hex) pisan el color de la banda y del rótulo.
-
-Bug corregido el mismo día en `validar.py`: con dos niveles de anidación
-(nodo → carril → semana) sumaba el desplazamiento del abuelo dos veces y
-reportaba 47 solapamientos falsos. Ahora resuelve las coordenadas absolutas
-sobre las relativas originales.
 
 ## Dos reglas que no se negocian
 
@@ -173,8 +169,7 @@ sobre las relativas originales.
 bloque de prosa flotando junto a las cajas ("De dónde sale este diagrama", "Tres
 cosas que el diagrama esconde", "Detalle de cada contenedor") no es parte del
 dibujo: es una nota al pie que se coló adentro, y es lo primero que hace ver
-cargada una lámina. *(Regla del responsable del repo, 2026-09-09 — antes existía una clave
-`notas` en el spec; se retiró.)*
+cargada una lámina. *(Regla del responsable.)*
 
 Si el contexto hace falta, va en el `.diagrama.json` bajo una clave que empiece
 con **guion bajo** (`_apuntes_no_se_dibujan`), que el generador ignora, o en el
@@ -182,8 +177,7 @@ documento que cita el diagrama. `generar.py` **aborta** si encuentra `notas`.
 
 **2. Ninguna línea pasa pegada a una estructura.** Mínimo **18px** entre
 cualquier tramo de flecha y cualquier caja o marco que no sea su origen o su
-destino. *(Regla del responsable del repo, 2026-09-09: una flecha pasaba lamiendo el borde del
-contenedor "Microservicios satélite".)*
+destino. *(Regla del responsable.)*
 
 El corredor por sí solo no alcanzaba: el recuadro de un grupo se mete
 `PAD_GRUPO` hacia adentro del corredor, y `TITULO_GRUPO` por arriba, así que un
@@ -197,21 +191,21 @@ forma de salir. Lo mismo con la barra de color, que es un hijo de la caja.
 
 La regla que gobierna todo: **el color informa, no decora.** Una caja es blanca
 con borde fino gris, y su categoría se lee en una barra de 4px arriba. Pintar el
-relleno entero de color es lo que hacía ver denso el diagrama viejo.
+fondo entero de color es lo que hacía ver denso el diagrama viejo.
 
 - **Cuatro acentos, no siete.** `principal` (azul profundo, lo central) ·
   `apoyo` (azul apagado, lo que rodea) · `acento` (terracota, lo que hay que
   mirar) · `neutro` (gris azulado, lo secundario). Los nombres viejos (`azul`,
   `rojo`, `verde`…) siguen funcionando: se mapean solos.
 - **Dos tamaños de letra por caja:** nombre en 13px negrita sobre tinta oscura,
-  detalle en 11px gris. Eso da jerarquía sin necesidad de color de relleno.
+  detalle en 11px gris. Eso da jerarquía sin necesidad de color de fondo.
 - **Una sola línea de detalle por caja.** Si una caja necesita tres líneas para
   explicarse, el diagrama está contando dos cosas a la vez: el detalle va al
   documento que cita el diagrama, nunca dentro de la lámina (regla 1).
 - **Altura uniforme por fila.** Todas las cajas de una misma fila miden lo mismo,
   aunque su texto sea más corto. Alturas dispares en una línea es lo que se lee
   como "descuadrado".
-- **Grupos como banda clara**, sin línea punteada: un relleno `#F6F8F9` con el
+- **Grupos como banda clara**, sin línea punteada: un fondo `#F6F8F9` con el
   título en versalitas grises agrupa igual y no compite con las cajas.
 - **Flechas de 1px en gris**, punta fina, etiqueta en 10px gris.
 
@@ -249,10 +243,8 @@ encimadas — pasó, y el validador no lo veía porque excluía las celdas de te
 Ahora las mide por su texto, no por su ancho declarado.
 
 **Los puntos de anclaje se reparten por borde, mezclando salidas y entradas en la
-misma serie, ordenados según dónde está el otro extremo.** *(El orden se agregó el
-2026-09-10: en el orden del spec, una flecha hacia la izquierda podía salir por la
-derecha y cruzar a sus vecinas; en el diagrama de contenedores bajó los cruces de
-13 a 9.)* Calcularlos por separado fue un bug real (2026-09-09): las salidas
+misma serie, ordenados según dónde está el otro extremo.** En el orden del spec, una flecha hacia la izquierda podía salir por la
+derecha y cruzar a sus vecinas. Al calcularlos por separado las salidas
 caían en 0.2/0.4/0.6/0.8 y las entradas en 0.333/0.667, y sobre una caja de 280px
 el 0.4 y el 0.333 quedan a 19px — se leen como el mismo punto. Un borde, una sola
 serie.
@@ -272,7 +264,7 @@ intencional en vez de como un error de dibujo.
     "anchos_columna": { "0": 320 },    // opcional, por índice de columna
     "grupos": [ { "id": "sat", "titulo": "Microservicios satélite" } ],
     "nodos": [{
-      "id": "crm", "col": 0, "fila": 2,
+      "id": "core", "col": 0, "fila": 2,
       "titulo": "api-core",
       "lineas": [".NET 10", "_texto en cursiva_"],   // _asi_ = cursiva
       "color": "rojo",
@@ -281,7 +273,7 @@ intencional en vez de como un error de dibujo.
       "ancho": 300                     // opcional, pisa el de la columna
     }],
     "flechas": [{
-      "de": "crm", "a": "per",
+      "de": "core", "a": "per",
       "etiqueta": "2 · REST",
       "tipo": "solida",                // solida | punteada | gruesa
       "color": "naranja",
@@ -325,7 +317,7 @@ python validar.py ../../../contexto-negocio/diagramas/*/*.drawio
 ```
 
 Sirve para los `.drawio` viejos hechos a mano. **Reporta, no toca nada.** Un
-diagrama existente no se rehace sin que el responsable del repo lo pida: vale CLAUDE.md, "cero
+diagrama existente no se rehace sin que el responsable lo pida: vale CLAUDE.md, "cero
 eliminaciones y consentimiento previo".
 
 Si una página sale como *comprimida*, el `.drawio` guarda el XML empaquetado.

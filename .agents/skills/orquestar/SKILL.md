@@ -1,6 +1,8 @@
 ---
 name: orquestar
 description: "Runs the architect→planner→coder|coder-web→qa pipeline for a task in api-core (or web-app), then integration tests + adversary + security-review in parallel, with bounded QA and adversary retry loops."
+tipo: skill
+tags: [harness]
 ---
 <!-- generado por .claude/scripts/generar-skills-codex.py; no editar a mano -->
 

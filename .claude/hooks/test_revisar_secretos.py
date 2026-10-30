@@ -20,7 +20,8 @@ RAIZ = Path(__file__).resolve().parents[2]
 REVISOR = RAIZ / ".claude/hooks/revisar_secretos.py"
 WRAPPER = RAIZ / ".claude/hooks/check-appsettings.py"
 HOOKS = RAIZ / "scripts/hooks-repos"
-SECRETO = "abc123realvalue"
+# Todos los valores de credenciales de esta suite son fixtures sintéticos sin uso externo.
+SECRETO = "tst123fakevalue"
 
 
 def office(texto=None, xml=None, entrada="word/document.xml"):
@@ -48,7 +49,7 @@ class PruebasSecretos(unittest.TestCase):
         self.env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + self.env.get("PATH", "")
         self.git("init")
         self.git("config", "user.name", "Pruebas secretos")
-        self.git("config", "user.email", "<email>")
+        self.git("config", "user.email", "pruebas@example.invalid")
 
     def ejecutar(self, argumentos, entrada=None, cwd=None):
         return subprocess.run([str(a) for a in argumentos], input=entrada,
@@ -96,16 +97,16 @@ class PruebasSecretos(unittest.TestCase):
                 self.git("read-tree", "--empty")
 
     def test_04_docx_runs_placeholder_y_conexion(self):
-        xml = ('<w:document xmlns:w="urn:test"><w:p><w:r><w:t>API Key: abc123</w:t>'
-               '</w:r><w:r><w:t>realvalue</w:t></w:r></w:p></w:document>')
+        xml = ('<w:document xmlns:w="urn:test"><w:p><w:r><w:t>API Key: tst123</w:t>'
+               '</w:r><w:r><w:t>fakevalue</w:t></w:r></w:p></w:document>')
         for datos, esperado in ((office(xml=xml), 1), (office("API Key: REPLACE_ME"), 0),
-                                (office("Server=x;Database=y;User Id=u;Password=Sup3rS3cret!"), 1)):
+                                (office("Server=x;Database=y;User Id=u;Password=Synt3ticPass!"), 1)):
             with self.subTest(esperado=esperado):
                 self.stage("guia.docx", datos)
                 resultado = self.revisar()
                 self.assertEqual(resultado.returncode, esperado)
                 self.assertNotIn(SECRETO, resultado.stdout + resultado.stderr)
-                self.assertNotIn("Sup3rS3cret!", resultado.stdout + resultado.stderr)
+                self.assertNotIn("Synt3ticPass!", resultado.stdout + resultado.stderr)
 
     def test_05_readme_limpio(self):
         self.stage("README.md", "# Prueba\n")
@@ -117,7 +118,7 @@ class PruebasSecretos(unittest.TestCase):
         self.assertEqual(resultado.returncode, 1)
         self.assertEqual(len(resultado.stdout.splitlines()), 20)
         self.assertNotIn(SECRETO, resultado.stdout + resultado.stderr)
-        self.assertIn('"abc1...[REDACTADO, 15 chars]"', resultado.stdout)
+        self.assertIn('"tst1...[REDACTADO, 15 chars]"', resultado.stdout)
         for valor in ("z", "abcd", "abc\ndefgh"):
             redactado = revisor.redactar(valor)
             self.assertNotIn(valor, redactado)
@@ -145,19 +146,21 @@ class PruebasSecretos(unittest.TestCase):
             self.assertEqual(resultado.returncode, esperado)
             self.assertNotIn(SECRETO, resultado.stdout + resultado.stderr)
             if esperado:
-                self.assertEqual(resultado.stdout, '  ApiKey = "abc1...[REDACTADO, 15 chars]"\n')
+                self.assertEqual(resultado.stdout, '  ApiKey = "tst1...[REDACTADO, 15 chars]"\n')
 
     def test_09_docx_historico(self):
-        # Ejemplo de cómo verificar que un docx con secretos limpiados en un commit
-        # posterior ya no dispara falsos positivos contra su versión histórica sucia.
-        # Ajusta COMMIT^:ruta a un caso real de tu propio historial si quieres activarlo.
-        commit_ejemplo = os.environ.get("TEST_DOCX_HISTORICO_COMMIT", "")
-        if not commit_ejemplo:
-            self.skipTest("Sin TEST_DOCX_HISTORICO_COMMIT configurado, se omite (ejemplo opcional)")
-        anterior = revisor.git(RAIZ, "show", f"{commit_ejemplo}")
-        if anterior.returncode:
-            self.skipTest("No existe o no es accesible el blob histórico indicado")
+        # Historial sintético: conserva las dos comprobaciones sin depender de blobs privados.
+        ruta = "docs/guia-integracion.docx"
+        self.stage(ruta, office("API Key: " + SECRETO))
+        self.git("commit", "-m", "fixture historico sintetico")
+        self.stage(ruta, office("API Key: REPLACE_ME"))
+        self.git("commit", "-m", "fixture limpio sintetico")
+        anterior = revisor.git(self.repo, "show", f"HEAD^:{ruta}")
+        self.assertEqual(anterior.returncode, 0, "No se pudo leer el DOCX histórico sintético")
         self.assertTrue(revisor.revisar_bytes("historico.docx", anterior.stdout))
+        actual = revisor.git(self.repo, "show", f"HEAD:{ruta}")
+        self.assertEqual(actual.returncode, 0, "No se pudo leer el DOCX de HEAD")
+        self.assertFalse(revisor.revisar_bytes("actual.docx", actual.stdout))
 
     def test_stage_no_working_tree_y_ruta_con_espacios(self):
         archivo = self.stage("carpeta con espacios/appsettings.json", json.dumps({"ApiKey": SECRETO}))
@@ -230,12 +233,12 @@ class PruebasSecretos(unittest.TestCase):
                 self.assertFalse(revisor.revisar_bytes("a.docx", office(f'API Key: "{valor}"')))
 
     def test_office_prosa_y_nombres_placeholder(self):
-        # Falsos positivos reales de una guía ya limpia de secretos (caso real de origen)
+        # Falsos positivos reales de la guía de SERVICE ya limpia (HEAD de 2026-09-17)
         for texto in ("SERVICE_DASHBOARD_PASSWORD=DASHBOARD_PASS", "Con X-Webhook-Secret: adelante, el webhook",
                       "un error de Jwt:SecretKey que no tiene nada que ver", "Contraseña: temporal"):
             with self.subTest(texto=texto):
                 self.assertFalse(revisor.revisar_bytes("a.docx", office(texto)))
-        for valor in ("Sup3rS3cret", "bVrmQxLpZtYk", "abc_def_ghi", "ABCDEF123456"):
+        for valor in ("Synt3ticPass", "fixture123abc", "abc_def_ghi", "ABCDEF123456"):
             with self.subTest(valor=valor):
                 self.assertTrue(revisor.revisar_bytes("a.docx", office(f"SERVICE_API_KEY={valor}")))
 
@@ -250,11 +253,11 @@ class PruebasSecretos(unittest.TestCase):
 
     def test_xlsx_pptx_y_todas_las_entradas_xml(self):
         for extension, entrada, xml in (
-            ("XLSX", "xl/sharedStrings.xml", '<sst><si><t>token: </t><r><t>abc123realvalue</t></r></si></sst>'),
-            ("PPTX", "ppt/notesSlides/notesSlide1.xml", '<a:p xmlns:a="urn:test"><a:r><a:t>secret=abc123realvalue</a:t></a:r></a:p>')):
+            ("XLSX", "xl/sharedStrings.xml", '<sst><si><t>token: </t><r><t>tst123fakevalue</t></r></si></sst>'),
+            ("PPTX", "ppt/notesSlides/notesSlide1.xml", '<a:p xmlns:a="urn:test"><a:r><a:t>secret=tst123fakevalue</a:t></a:r></a:p>')):
             with self.subTest(extension=extension):
                 self.assertTrue(revisor.revisar_bytes("a." + extension, office(xml=xml, entrada=entrada)))
-        self.assertFalse(revisor.revisar_bytes("a.txt", b"password=abc123realvalue"))
+        self.assertFalse(revisor.revisar_bytes("a.txt", b"password=tst123fakevalue"))
 
     def test_errores_fail_closed_archivos(self):
         roto = self.stage("roto.docx", b"no es zip")

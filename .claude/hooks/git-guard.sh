@@ -50,7 +50,14 @@ fi
 # ---------- Regla 1: base del PR ----------
 if echo "$CMD" | grep -qE '\bgh[[:space:]]+pr[[:space:]]+create\b'; then
   TIENE_DEVELOP=$(git -C "${CLAUDE_PROJECT_DIR:-$PWD}" ls-remote --heads origin develop 2>/dev/null | head -1)
-  if echo "$CMD" | grep -qE '(--base|-B)[[:space:]=]+"?(main|master|qa)($|[^a-zA-Z0-9_-])'; then
+  # Repos personales del responsable (origin en <org>/): su flujo es develop -> main, sin qa
+  # (2026-10-10, un proyecto personal). AcmeOrg y el resto siguen bloqueados contra main/master/qa.
+  PERSONAL_OWNER="${GIT_GUARD_PERSONAL_OWNER:-<org>}"
+  PERSONAL=""
+  case "$(git -C "${CLAUDE_PROJECT_DIR:-$PWD}" remote get-url origin 2>/dev/null)" in
+    *github.com[:/]"$PERSONAL_OWNER"/*) PERSONAL=1 ;;
+  esac
+  if [ -z "$PERSONAL" ] && echo "$CMD" | grep -qE '(--base|-B)[[:space:]=]+"?(main|master|qa)($|[^a-zA-Z0-9_-])'; then
     echo "BLOQUEADO por git-guard.sh - PR contra main/master/qa." >&2
     echo "El flujo es develop -> qa -> main. Usa: --base develop" >&2
     exit 2

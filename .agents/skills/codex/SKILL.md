@@ -1,6 +1,8 @@
 ---
 name: codex
-description: "Revisión de código con Codex CLI (OpenAI) antes del push, como segundo revisor junto al QA, en toda corrida salvo Nivel 0, y coder de lo mecánico. Solo si la cuenta de Codex tiene crédito disponible; si no, se omite sin bloquear."
+description: "Revisión de código con Codex CLI (OpenAI) antes del push, como segundo revisor junto al QA en el pipeline completo o en tareas avanzadas, y coder de lo mecánico. Solo si la cuenta de Codex tiene cuota disponible; si no, se omite sin bloquear."
+tipo: skill
+tags: [harness]
 ---
 <!-- generado por .claude/scripts/generar-skills-codex.py; no editar a mano -->
 

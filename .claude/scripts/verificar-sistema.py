@@ -1,7 +1,7 @@
 """Chequeos del sistema multiagente que valen para cualquier motor (Claude, Codex, Antigravity). Lo corre el pre-commit de la raíz.
 
 Bloquea (sale 1): punteros de Codex (.agents/skills) desactualizados o agentes de .claude/agents mal formados.
-Solo avisa: copias de ~/.claude/hooks distintas de las versionadas (viven fuera del repo; las actualiza la persona a cargo).
+Solo avisa: copias de ~/.claude/hooks distintas de las versionadas (viven fuera del repo; las actualiza el responsable).
 Uso: python .claude/scripts/verificar-sistema.py
 """
 import pathlib

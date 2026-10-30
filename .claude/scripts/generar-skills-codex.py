@@ -7,8 +7,8 @@ import pathlib
 import re
 import sys
 
-MAQ = pathlib.Path(__file__).resolve().parents[2]
-DESTINO = MAQ / ".agents" / "skills"
+HARNESS_ROOT = pathlib.Path(__file__).resolve().parents[2]
+DESTINO = HARNESS_ROOT / ".agents" / "skills"
 MARCA = "<!-- generado por .claude/scripts/generar-skills-codex.py; no editar a mano -->"
 
 
@@ -22,11 +22,13 @@ def descripcion(texto: str, nombre: str) -> str:
 
 
 def skill(nombre: str, fuente: pathlib.Path) -> str:
-    rel = fuente.relative_to(MAQ).as_posix()
+    rel = fuente.relative_to(HARNESS_ROOT).as_posix()
     desc = descripcion(fuente.read_text(encoding="utf-8"), nombre).replace('"', "'")
     return f"""---
 name: {nombre}
 description: "{desc}"
+tipo: skill
+tags: [harness]
 ---
 {MARCA}
 
@@ -46,8 +48,8 @@ Para cambiar este skill, editá `{rel}` y regenerá con `python .claude/scripts/
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")  # la consola de Windows rompe las tildes
     verificar = "--verificar" in sys.argv
-    fuentes = {p.stem: p for p in sorted((MAQ / ".claude" / "commands").glob("*.md"))}
-    for p in sorted((MAQ / ".claude" / "skills").glob("*/SKILL.md")):
+    fuentes = {p.stem: p for p in sorted((HARNESS_ROOT / ".claude" / "commands").glob("*.md"))}
+    for p in sorted((HARNESS_ROOT / ".claude" / "skills").glob("*/SKILL.md")):
         fuentes.setdefault(p.parent.name, p)
     viejos = []
     for nombre, fuente in fuentes.items():
@@ -56,7 +58,7 @@ def main() -> int:
         if archivo.exists():
             actual = archivo.read_text(encoding="utf-8")
             if MARCA not in actual:
-                print(f"se respeta (escrito a mano): {archivo.relative_to(MAQ).as_posix()}")
+                print(f"se respeta (escrito a mano): {archivo.relative_to(HARNESS_ROOT).as_posix()}")
                 continue
             if actual == nuevo:
                 continue

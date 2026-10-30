@@ -66,7 +66,7 @@ fi
 ADD_DIR_ARGS=()
 for D in "${ADD_DIRS[@]}"; do ADD_DIR_ARGS+=(--add-dir "$D"); done
 
-PROMPT="Sos un analista de codigo preciso. Lee con tus herramientas los archivos listados abajo y responde la pregunta de forma concisa, en bullets estructurados. Sin saludos, sin prosa, sin preambulos.
+PROMPT="Sos un analista de codigo preciso. Lee con tus herramientas los archivos listados abajo y responde la pregunta de forma concisa, en bullets estructurados. Sin saludos, sin prosa, sin preambulos. Lee los archivos solo con tu herramienta de lectura de archivos; nunca ejecutes comandos de shell (en modo headless se niegan y no hay salida).
 
 Archivos:
 ${FILE_LIST}

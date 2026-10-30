@@ -57,11 +57,11 @@ class Caja:
                 and self.x2 >= o.x2 and self.y2 >= o.y2)
 
     def es_fondo(self):
-        """Recuadro de agrupacion o lamina de relleno.
+        """Recuadro de agrupacion o lamina de fondo.
 
         No se decide por el estilo sino por la geometria: una caja que contiene
         enteras a otras es un contenedor, tenga relleno o no. Asi funciona
-        igual con los .drawio hechos a mano, donde un rectangulo de relleno suele
+        igual con los .drawio hechos a mano, donde un rectangulo de fondo suele
         llevar color.
         """
         return self.contenidas > 0
@@ -245,7 +245,7 @@ def revisar_pagina(nombre, cajas, flechas):
                 c.h = min(c.h, sum(alto_linea(px) for _, px, _ in ls) + 6)
 
     reales = [c for c in cajas if c.w > 0 and c.h > 0 and not c.es_fondo()]
-    rellenos = [c for c in cajas if c.es_fondo()]
+    fondos = [c for c in cajas if c.es_fondo()]
     por_id = {c.id: c for c in cajas}
 
     # --- E1: cajas superpuestas -------------------------------------------
@@ -260,10 +260,10 @@ def revisar_pagina(nombre, cajas, flechas):
                     f"({s[0]:.0f}x{s[1]:.0f} px)")
 
     # un recuadro de agrupacion no debe pisar nodos que no le pertenecen
-    for f in rellenos:
+    for f in fondos:
         for c in reales:
             # el anidamiento vale en los dos sentidos: un recuadro puede estar
-            # dentro de un rectangulo de relleno que abarca toda la lamina
+            # dentro de un rectangulo de fondo que abarca toda la lamina
             if f.contiene(c) or c.contiene(f):
                 continue
             s = _solapan(f, c)
@@ -274,8 +274,8 @@ def revisar_pagina(nombre, cajas, flechas):
 
     # dos recuadros que se cruzan sin que uno contenga al otro: marcos de un
     # diagrama de secuencia mal anidados, o grupos que se invaden
-    for i, a in enumerate(rellenos):
-        for b in rellenos[i + 1:]:
+    for i, a in enumerate(fondos):
+        for b in fondos[i + 1:]:
             if a.contiene(b) or b.contiene(a):
                 continue
             s = _solapan(a, b)

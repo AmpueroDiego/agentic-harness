@@ -1,6 +1,8 @@
 ---
 name: requisitos
-description: "Redacta, confirma, versiona y marca obsoleto un REQ en la Biblioteca de requisitos (`requisitos/`) — la capa de specs de SDD. La IA redacta desde el chat, el responsable del repo confirma antes de que el REQ alimente el pipeline."
+description: "Redacta, confirma, versiona y marca obsoleto un REQ en la Biblioteca de requisitos (`requisitos/`) — la capa de specs de SDD. La IA redacta desde el chat, el responsable confirma antes de que el REQ alimente el pipeline."
+tipo: skill
+tags: [harness]
 ---
 <!-- generado por .claude/scripts/generar-skills-codex.py; no editar a mano -->
 

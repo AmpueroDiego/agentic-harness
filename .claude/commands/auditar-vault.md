@@ -1,4 +1,6 @@
 ---
+tipo: comando
+tags: [sistema-multiagente]
 description: Audita la salud del vault de Obsidian — grafo de enlaces, grupos de color, exclusiones y junctions — y propone correcciones sin aplicar ninguna.
 ---
 
@@ -73,7 +75,7 @@ equivalentes:
 
 Las **hojas** que reporta `--detalle` (entrantes pero ningún saliente) merecen la
 segunda: cuelgan de un solo hilo y si su índice se oculta vuelven a quedar sueltas.
-Es lo que pasó con un grupo de tarjetas del tablero de tareas.
+Es lo que pasó con las 13 tarjetas de Trello.
 
 ## Reglas al aplicar correcciones
 

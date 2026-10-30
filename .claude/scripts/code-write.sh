@@ -49,6 +49,7 @@ fi
 
 PROMPT="Generas archivos de codigo a partir de una especificacion y, si se da, un archivo de referencia.
 Si hay archivo de referencia, igualalo exactamente en estilo, convenciones, nombres y patrones.
+Lee los archivos solo con tu herramienta de lectura de archivos; nunca ejecutes comandos de shell (en modo headless se niegan y no hay salida).
 Devolve SOLO el contenido final del archivo de destino como texto plano. Sin explicaciones, sin fences de markdown.
 
 ${REF_LINE}

@@ -1,5 +1,6 @@
 ---
 tipo: guia-oficial
+fecha: 2026-08-27
 tags: [playbook, heuristica, produccion, anti-regresiones, gobernanza, best-practices]
 ---
 
@@ -44,6 +45,19 @@ la fuente única; una copia que diverge es peor que no tener la regla.
 22. [Un build incremental miente en local, no en CI](#22-un-build-incremental-miente-en-local-no-en-ci)
 23. [Comentarios de código: el porqué, en 1-3 líneas](#23-comentarios-de-código-el-porqué-en-1-3-líneas)
 24. [Una lista, una sola fuente — y los restos que deja un renombre](#24-una-lista-una-sola-fuente--y-los-restos-que-deja-un-renombre)
+25. [Política Estricta de Consentimiento y Cero Eliminaciones](#25-política-estricta-de-consentimiento-y-cero-eliminaciones)
+26. [Estándar Oficial de Entrega en Trello y GitHub PR](#26-estándar-oficial-de-entrega-en-trello-y-github-pr)
+27. [Windows 11 Smart App Control (0x800711C7) y Binarios en Desarrollo](#27-windows-11-smart-app-control-0x800711c7-y-binarios-en-desarrollo)
+28. [Gobernanza del Vault de Obsidian: Nomenclatura kebab-case, Cero Pipes Escapados y Frontmatters](#28-gobernanza-del-vault-de-obsidian-nomenclatura-kebab-case-cero-pipes-escapados-y-frontmatters)
+29. [Agrupación de campos y formato de progreso en una vista agregada](#29-agrupación-de-campos-y-formato-de-progreso-en-una-vista-agregada)
+30. [Lo que Codex encontró 260 veces: checklist antes de abrir el PR](#30-lo-que-codex-encontró-260-veces-checklist-antes-de-abrir-el-pr)
+31. [Valores fijos: catálogo MAESTRO + enum, nunca texto libre](#31-valores-fijos-catálogo-maestro--enum-nunca-texto-libre)
+32. [Lecciones operativas del 13/10: hilos sin responder, worktrees y datos de seguridad](#32-lecciones-operativas-del-1310-hilos-sin-responder-worktrees-y-datos-de-seguridad)
+33. [Lecciones de los últimos 50 PRs de api-core y web-app (2026-10-16)](#33-lecciones-de-los-últimos-50-prs-de-api-core-y-web-app-2026-10-16)
+34. [Tests de integración: un solo SQL Server y tests de migración de vida corta](#34-tests-de-integración-un-solo-sql-server-y-tests-de-migración-de-vida-corta)
+35. [Las reglas de negocio no leen texto: deciden por códigos guardados (2026-10-28)](#35-las-reglas-de-negocio-no-leen-texto-deciden-por-códigos-guardados-2026-10-28)
+36. [Reglas aprendidas en los PRs del 28/10 (api-core #111, web-app #147, #150, #130)](#36-reglas-aprendidas-en-los-prs-del-2810-api-core-111-web-app-147-150-130)
+37. [Una sola migración por PR mientras no esté aplicada (2026-10-28)](#37-una-sola-migración-por-pr-mientras-no-esté-aplicada-2026-10-28)
 
 ---
 
@@ -168,7 +182,7 @@ el nivel de log del componente de acceso a datos, sin tocar el nivel de errores:
 ## 7. Idempotencia en flujos compuestos
 
 **El problema:** un flujo que vincula/asocia una entidad a otra (p. ej. un mensaje entrante sin
-asignar, a un caso) puede fallar con una excepción cuando el reintento del usuario recae sobre
+asignar, a una entidad) puede fallar con una excepción cuando el reintento del usuario recae sobre
 un vínculo que ya existe, en vez de responder OK de forma idempotente.
 
 **La regla:**
@@ -323,7 +337,7 @@ revisión aunque no aparezca en el diff.
 ## 14. Fusión defensiva e independiente de campos al consolidar entidades
 
 **El problema:** al agrupar/consolidar registros que vienen de distintas llamadas o distintas
-entidades del backend (p. ej. la misma persona en varios contratos), los datos de contacto e
+entidades del backend (p. ej. la misma entidad en varias relaciones), los datos de contacto e
 identidad suelen llegar fragmentados: un registro trae un campo, otro trae el campo faltante.
 Condicionar la fusión al estado de un array completo, o limitarla a solo algunos campos, provoca
 pérdida silenciosa de datos válidos que el API sí devolvió.
@@ -694,3 +708,372 @@ una.
 5. **Dos funciones parecidas con nombres distintos no son sobrecarga**, y dos copias son
    coincidencia — se extrae recién al tercer duplicado (sección 19). Sobrecarga real es el mismo
    nombre con firmas distintas.
+
+---
+
+## 25. Política Estricta de Consentimiento y Cero Eliminaciones
+
+* **NUNCA ELIMINAR NADA:** Prohibido purgar tarjetas de Trello, comentarios, adjuntos, ramas remotas, código, tablas o archivos sin instrucción explícita e inequívoca del usuario.
+* **CONSENTIMIENTO PREVIO OBLIGATORIO:** Antes de ejecutar cualquier mutación en Trello (mover columna, modificar descripción, asignar miembros, adjuntar archivos) o cualquier acción destructiva en Git/BD, el agente debe presentar la propuesta exacta y esperar la aprobación expresa del usuario (*"procede"*, *"dale"*).
+
+---
+
+## 26. Estándar Oficial de Entrega en Trello y GitHub PR
+
+1. **Títulos de Tarjetas:** El título de una tarjeta existente **se respeta al 100%** (prohibido renombrarla).
+2. **Columna Destino:** Se mueven a **`En revisión (Revisor Principal)`** solo cuando el responsable lo pide expresamente; abrir el PR no mueve la tarjeta. Hay otra columna `En revisión (Revisor Secundario)`: resolver siempre por nombre exacto contra el tablero vivo.
+3. **Miembros Obligatorios al entregar (2 personas):**
+   * `<responsable>` (el responsable)
+   * `<revisor-principal>` (Revisor Principal) — resolver por el identificador configurado del Revisor Principal, sin confundirlo con otros colaboradores.
+4. **Etiquetas Oficiales:**
+   * Backend: 🟢 **`Backend`** + 🔴 **`Migración`**
+   * Frontend: 🔵 **`Frontend`**
+5. **Integración GitHub:** Vincular el PR como **adjunto nativo del Power-Up de GitHub** (`#<num> <título>`). **PROHIBIDO poner comentarios redundantes con enlaces del PR** en la tarjeta; la integración del Power-Up es limpia y autosuficiente.
+6. **Automatización:** Ejecutable con `gh pr create --base develop` y la skill `/trello` (`.claude/tools/trello/trello.py`). `scripts/trello.ps1` no conecta en la máquina del responsable.
+
+---
+
+## 27. Windows 11 Smart App Control (0x800711C7) y Binarios en Desarrollo
+
+* **El Problema:** Al compilar código en Windows 11 con Smart App Control (SAC) en modo de aplicación o evaluación, Windows puede bloquear repentinamente DLLs recién emitidas por el compilador con la excepción:
+  `System.IO.FileLoadException: Could not load file or assembly 'Rest.dll'. An Application Control policy has blocked this file. (0x800711C7)` (Evento 3077/3118 en `CodeIntegrity/Operational`).
+* **La Regla de Oro:**
+  1. No realizar ejecuciones agresivas de `dotnet clean` repetitivas que fuercen la reemisión de ensamblados en carpetas de depuración cuando la política de integridad de código esté activa.
+  2. Para entornos de desarrollo en Windows, los desarrolladores deben activar **Modo de Desarrollador** en Windows Settings (`Configuración > Sistema > Para programadores > Modo de desarrollador`) o agregar exclusión de Defender sobre la ruta de repositorios.
+  3. Reconstruir con `dotnet build` incremental preserva los hashes y minimiza bloqueos de Code Integrity.
+
+---
+
+## 28. Gobernanza del Vault de Obsidian: Nomenclatura kebab-case, Cero Pipes Escapados y Frontmatters
+
+* **El Problema:**
+  1. **Nombres con caracteres especiales y espacios** (`Terminado_Preparacin_de_Ambiente...`) generaron corrupciones con caracteres de reemplazo (`\ufffd`) y mojibake (`<texto-corrupto>`) en sistemas Windows.
+  2. **Pipes escapados (`|`) en wikilinks** (`[[0001-integracion...|ADR-0001]]`) provocaron que Obsidian buscase archivos inexistentes terminados en `\`, rompiendo la resolución de aristas en el Graph View.
+  3. **Notas sin frontmatter YAML** provocaron que Dataview en `Home.md` omitiera corridas y métricas de tokens.
+  4. **Notas huérfanas** creadas sin enlazarse en los índices padre (`docs/adr/README.md`, `docs/trello/README.md`, `contexto-negocio/README.md`).
+
+* **La Regla de Oro:**
+  1. **Nomenclatura Estricta:** Todo archivo Markdown debe nombrarse en minúsculas con guiones (`kebab-case.md`), sin espacios, sin tildes y sin caracteres especiales.
+  2. **Codificación UTF-8 sin BOM:** Todos los archivos deben escribirse explícitamente en UTF-8 sin BOM.
+  3. **Sintaxis Nativa de Wikilinks:** Usar siempre `[[ruta/nota|Alias]]` sin escapar jamás la barra vertical (`|`).
+  4. **Frontmatter YAML Obligatorio:** Toda nota debe iniciar con su bloque frontmatter (`tipo:`, `fecha:`, `tags:`).
+  5. **Trazabilidad Continua:** Toda nota debe tener al menos un enlace entrante desde su índice correspondiente.
+  6. **Validación Automática:** Ejecutar `python scripts/validar-vault.py` para asegurar 0 fallos de calidad antes de cerrar cualquier tarea documental.
+
+---
+
+## 29. Agrupación de campos y formato de progreso en una vista agregada
+
+**El problema:** más de veinte campos en una lista plana ocultan la jerarquía del dominio.
+
+**La regla:** agruparlos en tres secciones semánticas: datos de la entidad principal,
+datos de una entidad relacionada y datos de su agrupación. La clasificación concreta
+de los campos la define el dominio, nunca el agente por su cuenta.
+
+Un indicador compuesto mantiene un formato uniforme:
+
+`completados / total (pendientes)`
+
+El texto entre paréntesis se resalta con el token de alerta del tema cuando
+`pendientes < total`; si `pendientes == total` (cero completados), usa color neutro.
+Los significados y el color se validan con el responsable del dominio antes de copiar
+el ejemplo a otro producto. La agrupación y la fórmula no sustituyen los estados de
+disponibilidad parcial o fallida de la sección 18.
+
+## 30. Lo que Codex encontró 260 veces: checklist antes de abrir el PR
+
+*(2026-10-02. Salió de leer los 260 hallazgos de Codex en 44 PRs de api-core y web-app: 74 P1, 179 P2, 7 P3. Se agruparon a mano por título; los conteos son aproximados. Casi todos eran de unas pocas familias que se repiten PR tras PR; web-app #63 sola sumó más de 35. Cada punto es lo que hay que comprobar **antes** de pedir revisión, no después.)*
+
+### web-app
+
+1. **Respuesta tardía: toda lectura o escritura asíncrona que toca el store compara, al volver, la sesión, el registro o la pestaña que tenía al lanzarse, y se descarta si cambió.** Es la familia más grande (~35: web-app #6, #12, #55, #56, #63). Incluye reintentos, refrescos, subidas de archivo y comandos en cola: se atan a la generación de sesión. Una prueba por familia: lanzar la operación, cambiar de registro/cuenta, resolverla, y comprobar que no pisó nada.
+2. **Mientras hay un envío o una asignación en curso, el formulario y la tecla Enter quedan bloqueados.** Guardar con la versión vieja del recurso da 409 y el agente pierde lo que escribió (web-app #13, #14, #63).
+3. **Un borrador no se borra hasta que el envío salió bien**, se conserva lo tipeado mientras se envía y se guarda por conversación o registro, no uno global (web-app #1, #4, #13).
+4. **Orden de efectos: se guarda el id de lo creado antes del paso siguiente, y si el segundo paso falla se conserva y se reusa lo creado.** No se enlaza ni se marca nada hasta que la promoción terminó bien (web-app #4, #12). **Si el POST salió bien y la lectura posterior falla, la acción no se rehabilita**: se oculta, se avisa y se ofrece «Recargar», que nunca repite el POST (si no, el segundo clic da 409; web-app #73).
+5. **Error no es vacío** (sección 18): una carga parcial o fallida no se muestra como "sin datos", y lo que sí llegó no se oculta (web-app #12, #61, #63). **Un estado «no disponible» (`contractsStatus === "NoDisponible"`) nunca se pinta igual que «no hay»**: etiqueta distinta en cada pantalla que lo muestre, no solo en la primera (web-app #73).
+6. **URL y estado se sincronizan en cada transición**: abrir, cerrar la pestaña activa, cerrar la última, finalizar el registro y reemplazar un registro sintético por el real (web-app #6, #13, #14). **Todo camino que abre un registro, también el recién creado o convertido, termina en `goToView("console", id)` solo si la apertura salió bien**; antes de agregar un camino nuevo, buscar con `grep "abrirClientePorIdentificador("` quién más abre registros y comparar (web-app #73).
+7. **Teclado y lectores de pantalla**: todo lo que se hace con mouse tiene su equivalente; el foco y la selección van juntos; si el elemento enfocado desaparece, el foco pasa a un destino válido (**un popup o lista que se cierra con Enter o Esc devuelve el foco a su botón disparador**, con un `ref`, como `AgentStatusMenu`; web-app #73); lo truncado se puede ver completo sin pasar el mouse; un popup se limita al contenedor que recorta y scrollea (web-app #13, #61, #63, #64, #65).
+8. **Catálogos**: la etiqueta se resuelve contra todo el catálogo (también inactivos) para leer, y solo los activos se ofrecen para elegir; un código vacío nunca se resuelve (web-app #4, #50; ver sección 19).
+9. **El repositorio mock hace lo mismo que el API.** Cada regla nueva del API se refleja en el mock en el mismo PR (web-app #4, #12, #13).
+10. **Escalas y formatos se convierten en el borde**: calidad de cierre a la escala numérica del API, fechas sin corrimiento de zona horaria, `content type` del adjunto, valor cero distinto de ausente (web-app #4, #6, #8, #12).
+11. **Un filtro por un campo opcional trata `null` y ausente como «sin restricción», nunca como «no coincide».** `item.campo === valor` sobre un campo que el API puede no mandar deja la lista vacía y el agente sin opciones. Se usa `== null ||` y hay una prueba con el campo ausente (web-app #73: clasificaciones sin `tipoServicioId`).
+12. **Lo que es del cliente se actualiza en todas las pestañas del mismo cliente.** Registros y eventos pertenecen al identificador, no a la pestaña: al refrescar uno, se propagan a las demás entradas con ese identificador sin pisar su borrador ni su estado propio. Una prueba con dos pestañas del mismo identificador: guardar en una y ver el cambio en la otra (web-app #73).
+13. **Si el contexto activo puede venir incompleto o sintetizado, al formulario se le pasa la versión resuelta, no el resultado de buscar en la colección incompleta.** Buscar solo en `registrosCliente` entrega `undefined` y el formulario pierde el filtro por servicio (web-app #73: `buildRegistroOptions` ya sintetizaba el registro activo).
+
+*Qué falló en #73 (2026-10-07):* 7 hallazgos de Codex en un PR, y 4 ya estaban en esta lista (4, 5, 6 y 7). Leer la lista no alcanzó. Por eso el `## Coder Report` de `coder-web` lleva una sección «Checklist sección 30» con **evidencia por punto** (la prueba o «no aplica» y por qué), y QA marca como hallazgo propio el punto aplicable sin prueba.
+
+### api-core
+
+1. **El efecto externo va después de resolver y persistir** (regla 1 de `CLAUDE.md`): marcar el correo como visto solo tras guardar, reportar la entrega solo con el adjunto ya cargado, resolver la persona antes de enviar (api-core #14, #50).
+2. **Varias escrituras relacionadas van en una transacción y se pueden reintentar sin duplicar**; las filas de la bandeja de salida se reclaman de forma atómica (api-core #9, #14, #50, #65).
+3. **Una migración con datos preserva antes de reemplazar**: remapear antes de borrar un seed, deduplicar antes de un índice único, guardar la identidad antes de cambiar columnas, y dejar el despliegue aplicándola (sección 12; api-core #14, #21, #24, #26).
+4. **Error de una dependencia no es ausencia**: se lanza, no se devuelve una lista vacía ni un "Ok" (sección 18; api-core #19, #20, #22, #64).
+5. **Secretos y placeholders** (sección 1): un placeholder se rechaza, las credenciales no viven en el compose, el token de Sonar solo existe en los pasos del escáner, y en los logs no entran teléfonos ni GUID (api-core #14, #15, #55 a #58).
+6. **Telemetría**: una cancelación normal no es un error, y el fallo que un proceso en segundo plano absorbe sí se registra, sin datos personales (api-core #56 a #58).
+7. **Un comando sobre un recurso versionado devuelve la versión nueva y los campos ya poblados**, y revalida el estado antes de responder que no había nada que hacer (api-core #66).
+8. **Toda búsqueda tiene un tope** que no depende de cuántos resultados se aceptaron (api-core #19).
+
+## 31. Valores fijos: catálogo MAESTRO + enum, nunca texto libre
+
+*(2026-10-06, a pedido del responsable. Salió de `Registro.ResultadoCierre`: un texto libre que obligó a traducir con un `switch` en api-core y otra vez en web-app.)*
+
+Todos los repos hermanos (api-contracts, api-people, api-delivery, api-accounting) guardan sus
+estados y tipos igual. Antes de agregar un campo con un conjunto cerrado de valores, elegir el
+patrón por lo que el valor **es**:
+
+| El valor es… | Patrón | Ejemplo en api-core |
+|---|---|---|
+| Estado o tipo de **negocio** que se guarda | Tabla `MAESTRO.<X>` + `<X>Enum` con `[Id]`/`[Detail]`/`[Code]` + FK `<X>Id` en la entidad. El seed sale del enum (`GetId()`, `GetDetail()`, `GetCode()`), así no hay Guid copiado a mano | `EstadoRegistro`, `Canal`, `Clasificacion`, `TipoServicio` (`EstadoRegistroConfiguration.cs`) |
+| Código que el enum necesita como `const` (atributos, defaults) | Clase `<X>Codigos` que el enum referencia en su `[Code]`: es parte del patrón de arriba, no un reemplazo | `EstadoRegistroCodigos`, `CanalCodigos` |
+| Catálogo de **otro servicio** | Solo sus Ids como constantes; la tabla vive en el dueño | `TipoParticipanteIds` (api-contracts) |
+| **Plomería interna** que el negocio no lee | Enum guardado como `int` | Outbox, reintentos |
+| Solo **viaja en la API**, no se guarda | Enum en el DTO | `EstadoSeccionEnum`, `TipoContenidoPlantilla` |
+
+1. **Nunca texto libre para un valor de negocio.** Un `string` con "Manual"/"Registro" escrito en
+   varios archivos acepta cualquier typo como valor nuevo y termina en un `switch` que traduce.
+2. **La etiqueta vive en el catálogo**, no en un `switch` del backend ni repetida en el front.
+3. **Deuda conocida (2026-10-06)**: `Registro.ResultadoCierre` (tarjeta <card-id>) e
+   `Interaccion.Origen` (tarjeta <card-id>) son texto libre; `Interaccion.Tipo` es un enum de
+   negocio guardado como `int` sin tabla; `Mensaje.Estado` es texto (mensajería, fuera del corte
+   del 15/10). No se copia ninguno de estos como referencia.
+
+## 32. Lecciones operativas del 13/10: hilos sin responder, worktrees y datos de seguridad
+
+*(2026-10-13, a pedido del responsable, tras revisar el estado de `/supercodex` y arrancar la tarjeta <card-id>.)*
+
+### Ninguna ronda nueva con un hilo sin responder
+
+El 13/10 quedaron 11 hilos de Codex con **un solo comentario, el de Codex** (api-core #80; web-app #103, #107, #108). En #80 Codex repitió el mismo P2 en 3 revisiones sobre el mismo commit, y en #107 se pidió `@codex review` 27 segundos después de que llegara un hilo nuevo.
+
+1. Antes de cada `@codex review`, contar los hilos abiertos **y** los comentarios de Codex sin respuesta nuestra. Si hay alguno, primero se corrige o se responde, y recién después se pide la ronda.
+2. Pedir otra ronda sobre el mismo commit con un hallazgo abierto no lo limpia: Codex lo vuelve a encontrar.
+3. Cada ronda se anota en `docs/agent-runs/supercodex-rondas.md` cuando se lee. El 13/10 el registro seguía en el 12/10 con 10 PRs rondando, y el estado hubo que reconstruirlo desde GitHub.
+
+### `git -C <repo> worktree add` resuelve la ruta relativa desde el repo
+
+`git -C api-core worktree add .worktrees/x` crea `api-core/.worktrees/x`, no `AcmeOrg/.worktrees/x`. La ruta del worktree siempre va **absoluta**. Si ya quedó mal, se arregla con `git worktree move <ruta-actual> <ruta-absoluta>`, nunca borrando la carpeta.
+
+### Un traspaso o una nota se verifica antes de usarla
+
+El traspaso de <card-id> nombraba `Common/TenantEnum.cs`, pero el archivo real es `Domain/Aggregates/Common/Enum/TenantEnum.cs`. Antes de pasarle una ruta a un agente se comprueba con `Glob`/`grep`.
+
+### Roles y país en api-auth: mirar los datos antes de diseñar
+
+- `UsuarioRepository.GetRolesRutasPermisosByUserId` trae los `PaisRol` vigentes del usuario de **todos los países y todas las aplicaciones**; `idAplicacion` solo filtra los permisos. Un claim derivado de ahí sin filtrar mezcla países.
+- api-core autoriza `Roles = "Agente,Supervisor"`, pero en seguridad-db no existe ningún rol `Supervisor`, y el rol `Agente` solo tenía `PaisRol` en la región configurada. Antes de asumir que un rol o un país "ya está", hay que verlo en `Rol.Rol` y `PaisRol.PaisRol`.
+- El MCP `seguridad-db` tiene `execute_query` deshabilitado: solo hay `sample_data`, con un máximo de 100 filas y sin joins. Lo que no se puede comprobar así se marca **NO VERIFICADO** en el plan. No se da por cierto.
+
+## 33. Lecciones de los últimos 50 PRs de api-core y web-app (2026-10-16)
+
+*(2026-10-16, aprobado por el responsable. Salió de leer los hallazgos de Codex en api-core #36–#85 (98: 21 P1, 75 P2) y web-app #60–#109 (244: 3 P1, 227 P2). Revisor Principal aprobó con «Ok» sin hallazgos en línea, así que todo viene de Codex.)*
+
+Casi todo ya estaba escrito (§1, §7, §12, §18, §19, §30) y se volvió a romper: en api-core, los puntos 3, 5, 6 y 7 de §30 se violaron en PRs abiertos después del 02/10; en web-app, el mismo `aria-hidden` y el mismo `tabIndex` volvieron un PR después de corregirlos. Leer la lista no alcanza. Por eso cada regla de acá lleva su **control**: uno automático (test, lint o hook) o un punto de checklist que exige evidencia con nombre. Los controles automáticos marcados «pendiente: tarjeta» se implementan en tarjetas aparte, no en el PR que agrega esta sección.
+
+### api-core
+
+**A. Todo lo que guarda o publica un dato por país lleva el país: el `CoreDbContext` del scope, la clave de caché, el grupo de SignalR, la cabecera `X-Tenant` saliente y el scope de cada job. El país lo da solo `ITenantResolver` (hoy desde `X-Tenant`; con la tarjeta <card-id> pasa al claim del JWT): nadie lee la cabecera por su cuenta.**
+- Por qué: api-core #79, #80 y #81 (13 hallazgos, 7 P1). En #80 un JWT de `Agente` elegía la base de RegionB mandando `X-Tenant: RegionB`; la caché de canales y el grupo `cliente-{personaId}` no tenían país (rompe también la regla 3 de `CLAUDE.md`).
+- Cómo se verifica: el plan lista esos 5 lugares con su archivo; un test alterna la región configurada y RegionB en el mismo proceso y cubre caché, grupo y cabecera.
+- Control: test de arquitectura (sin literales `"Core:"`/`"cliente-"` fuera de su helper con tenant; ningún `extraHeaders: null` en `Services/API/**`; todo `CreateScope()` de jobs fija el tenant), partiendo de `PersistenceRegistrationTenantTests` y `TenantResolverTests`. Pendiente: tarjeta.
+
+**B. Todo comando que modifica un `Registro` o le cuelga algo recibe la `Version` que vio el agente: 409 si está vieja, 400 si falta. El request la declara obligatoria y la respuesta devuelve la nueva. Si solo inserta en una tabla hija, toma `BloquearFilaYVerificarCerrado` antes de validar.**
+- Por qué: amplía §30 api-core 7, que se violó después de escrita en #71 (Reabrir sin `Version`, encontrado dos veces), #74 (interacción tras un cierre concurrente) y #82 (`Version` como `string?` en el request).
+- Cómo se verifica: un test por comando: cargar V, cerrar y reabrir desde otro request, mandar V → 409.
+- Control: test de arquitectura (todo `*Command` que hace `Update` sobre `Registro` declara `Version` obligatoria en su `*Request` (`[Required]` en el parámetro del record, no en la propiedad: ver la lección del record posicional en «Proceso»); todo handler que inserta una `Interaccion` sobre un registro existente llama a `BloquearFilaYVerificarCerrado`). Pendiente: tarjeta (encaja en `exigir-version-al-editar-registro`).
+
+**C. Ningún cambio de estado borra historial: antes de poner en `null` o sobrescribir un campo de cierre, asignación o estado, se guarda una interacción con el valor anterior, en el mismo `Complete()`. Un dato heredado sin procedencia queda como desconocido; nunca se atribuye al usuario actual.**
+- Por qué: prioridad 2 de `CLAUDE.md`, sin regla en el playbook. api-core #71 (P1: reabrir borraba `ResultadoCierre` y `NotaCierre` sin registro; 6 de los 13 re-hallazgos) y #55 (un mensaje de MensajeriaExterna con fecha fuera de rango se descartaba entero en vez de guardarse con ese campo vacío).
+- Cómo se verifica: el test de cada transición comprueba que las interacciones del registro suben en 1 con el tipo correcto; con columnas de cierre `NULL` sembradas, no se inventa autor.
+- Control: checklist de QA, con evidencia: toda asignación `= null`/`default` sobre `FechaCierre`, `IdUsuarioCierre`, `ResultadoCierreId` o `NotaCierre` sin un `Interaccion.Crear…` antes en el mismo handler es hallazgo. Si se repite, pasa a test de búsqueda sobre el fuente.
+
+**D. Una migración se prueba contra una base con filas, y una tabla temporal se toca con el versionado apagado.** Amplía §12 con lo nuevo:
+1. Un `DEFAULT ''` o de fecha mínima es solo para el backfill y se quita en la misma migración.
+2. Ninguna guarda (`THROW`) que pida corregir datos dentro de la misma transacción: la columna en una migración, la restricción en otra.
+3. `UPDATE` sobre una temporal con `SYSTEM_VERSIONING = OFF`, tocando la tabla y su `History`, y se reactiva una sola vez.
+4. `PeriodStart` de las filas existentes es la fecha de la migración, no `0001-01-01`.
+5. Un backfill que elige un ganador ordena por la fecha de vinculación; si no puede decidir, no siembra.
+- Por qué: #43 (P1, el `THROW` revertía la columna), #70 (`PeriodStart = 0001-01-01`), #75 (el `UPDATE` con versionado activo dejó en `RegistroHistory` una edición que nadie hizo), #50. Todos posteriores a §12.
+- Cómo se verifica: patrón `MigracionHistorica_FilasPreviasComienzanEnLaFechaDeMigracion`; en temporales, además, `COUNT(*)` de `*History` no cambia con el backfill.
+- Control: hook `check-migraciones.py` (molde de `check-maxlength.py`) que avisa ante `defaultValue: ""` sin `AlterColumn` posterior, `new DateTime(1, 1, 1`, `THROW`/`RAISERROR` en `Sql(...)` y `UPDATE` sobre tabla temporal sin `SYSTEM_VERSIONING = OFF`. Pendiente: tarjeta.
+
+**E. Ningún header sensible, id de proveedor ni token llega a un log, a la telemetría ni a un paso de CI que corre código del PR.** Ya está en §1 y §30 api-core 5; lo nuevo:
+- La redacción de `Authorization`, `X-Api-Key`, `Cookie` y `Set-Cookie` vive en un solo helper que usan `ExceptionMiddleware` y `RequestResponseLoggingHandler`; un id de proveedor va con hash; una URL saliente se redacta por plantilla de ruta. Un workflow con secretos no se dispara por `pull_request_review` ni `pull_request_target`, y el secreto va en el `env` del paso, no del job.
+- Por qué: #76 (P1, `TRELLO_TOKEN` y un `GITHUB_TOKEN` de escritura con `pull_request_review`) y #78 (P1 en código viejo: el bearer y la `X-Api-Key` de PROVEEDOR_MENSAJERIA guardados en `RequestResponseLog`); también #55, #56 y #58.
+- Cómo se verifica: test unitario del helper con los 4 headers y test del handler con una respuesta 500 que mira la fila guardada.
+- Control: test de arquitectura (nadie fuera del helper serializa `Headers`) y rechazo, en `revisar_secretos.py` o en un `check-workflows.py`, de `pull_request_review`, `pull_request_target` y `secrets.` en el `env:` del job. Pendiente: tarjeta.
+
+**F. Un campo del relacion HTTP no se quita ni se renombra sin ventana de compatibilidad: el API se despliega antes que web-app, así que el campo viejo se sigue aceptando y traduciendo, o se rechaza con 400; nunca se ignora en silencio. Lo obligatorio en el comando también lo es en el request y en Swagger.**
+- Por qué: #74 y #75 (2 P1 seguidos): `ResultadoCierre` pasó a `ResultadoCierreId`, el front vigente mandaba el viejo, Newtonsoft lo ignoró y el registro se cerró con resultado `null` y 200. También #82 y #71.
+- Cómo se verifica: un test de endpoint que manda el JSON viejo y espera el dato guardado o un 400, nunca un 200 sin el dato.
+- Control: checklist de planner y QA («¿el diff quita o renombra una propiedad pública de un `*Request` o `*Command`? → sección "Compatibilidad" en el PR»). El detector en `/supercodex` sobre `git diff` de `Rest/**/*Request*.cs`: pendiente: tarjeta.
+
+**G. Una validación, un bloqueo o una normalización se aplica en todos los puntos de entrada que crean o modifican la misma entidad, en el dominio o en un validador compartido, no en un solo handler.** §30 web-app 6 ya pide el grep para el front; lo nuevo es el backend:
+- Por qué: #74 (`RegistrarContacto` dejaba agregar contactos a registros cerrados; `ConvertirEnRegistro` no revalidaba el canal activo), #85 (`POST /api/Registro` directo saltaba `IdempotenciaRegistro.Normalizar`), #50 y #66. §13 ya avisaba que «el defecto no estaba en el diff».
+- Cómo se verifica: el plan lista los puntos de entrada con la salida de `grep "Interaccion.Crear|new Registro|AgregarAlHistorial"` y QA comprueba un test por cada uno. Un comando interno que comparte el tipo del body público se separa, para que el cliente no pueda mandar `ClaveIdempotencia`.
+- Control: sección obligatoria «Puntos de entrada» en el plan del `planner`, con la salida del grep. El test de arquitectura (`new Registro(` e `Interaccion.CrearGestion(` solo en `Domain` o en una fábrica, refactorizando antes si hoy no se cumple, §19): pendiente: tarjeta.
+
+**H. Idempotencia de verdad: la clave es `nvarchar(450)` con collation `Latin1_General_100_BIN2` y se guarda con una huella inmutable del pedido; misma clave y misma huella devuelve lo creado, otra huella da 409, y un reintento nunca reaplica efectos secundarios.** Amplía §7, que cubre un solo registro:
+- Por qué: #83 (el reintento se comparaba contra la nota actual, que es editable, y `Abcdefgh` chocaba con `abcdefgh`), #85 (clave reusada en otro modo de contacto) y #50 (P1: un reintento viejo movía el contacto al cliente anterior).
+- Cómo se verifica: tres tests por endpoint: misma clave y payload → 200 idéntico; misma clave y otro payload → 409; claves que difieren solo en mayúsculas → dos registros.
+- Control: test de arquitectura sobre el `IModel` de `CoreDbContext`: toda propiedad `ClaveIdempotencia*` tiene `MaxLength 450` y collation `BIN2`. Pendiente: tarjeta.
+
+### web-app
+
+**1. `?? []`, `?? null` o `?? ""` sobre un dato del API está prohibido fuera del borde del repositorio: el repositorio devuelve `undefined` si no pudo leer y la UI dice «no se pudo cargar». `NoDisponible` y `Parcial` se tratan igual en cada pantalla.** Amplía §18 y §30 web-app 5:
+- Por qué: #73 (`client.registrosCliente ?? []` convertía «no se pudo cargar» en «no tiene registros» y la interacción se guardaba suelta), #100, #103 y #109. Hoy hay 65 `?? []` en código productivo.
+- Cómo se verifica: en cada consumidor nuevo de `registrosCliente`, `eventosCliente` o `contracts`, una prueba con `undefined` y otra con `contractsStatus: "Parcial"` y lista vacía.
+- Control: `no-restricted-syntax` en `eslint.config.js` sobre `src/features/agent-console/**` para `?? []`, en `warn` con línea base de 65 y en `error` al llegar a 0 (pendiente: tarjeta). Mientras tanto, QA pregunta «¿algún `?? []` nuevo en el diff?».
+
+**2. Nada enfocable lleva `aria-hidden`; nada no interactivo lleva `tabIndex={0}`; solo la capa modal superior responde a Escape; un diálogo con todo deshabilitado conserva un destino de foco. El texto nuevo pasa por `core-theme.contrast.test.ts`.** Amplía §30 web-app 7:
+- Por qué: #78 corrigió un `aria-hidden` en `WorkspaceTabs.tsx` y #88 lo volvió a meter; #103 puso `tabIndex={0}` en un `<li>` de `PendingView.tsx` y #104 otra vez. También #98 y #103 (Escape cerraba dos capas en `CaseViewDialog.tsx`). Son 40 hallazgos, y suben con la ola visual.
+- Cómo se verifica: lint y test de contraste, sin revisión humana.
+- Control: `eslint-plugin-jsx-a11y` (hoy no está instalado) con `no-aria-hidden-on-focusable`, `no-noninteractive-tabindex`, `interactive-supports-focus` y afines en `error`; el test de contraste con la tabla de pares texto/fondo que se usan en los dos temas y un regex que lea también hex de 3 dígitos (#94). Pendiente: tarjeta.
+
+**3. Un formulario tiene un solo `estadoInicial(contexto)`, que usan `limpiar()`, el reinicio después de guardar y el cambio de registro; cada elección temporal queda atada al id del registro. Una validación de cierre u obligatoriedad lee lo persistido, nunca el borrador.** Amplía §30 web-app 3:
+- Por qué: #103 (`useContactForm.ts` conservaba `clasificacionElegida` y `servicioCodigo` tras guardar, y el contacto siguiente salía con el subregistro anterior), #97 y #108; #71 y #90 (P1: no había forma de cerrar un registro sin clasificación porque se leía el borrador).
+- Cómo se verifica: prueba `estadoTrasGuardar === estadoInicial(contexto)` y prueba «elijo en A, paso a B, vuelvo a A → se ve lo persistido de A».
+- Control: checklist de coder-web, con evidencia: «¿el hook `use*Form` exporta `estadoInicial` y tiene el test de igualdad?». La versión con fast-check: pendiente: tarjeta.
+
+**4. La generación de sesión y la clave de contexto (registro o identificador) se chequean después de cada `await`, no solo al empezar. Todo comando que escribe va por `agent-console-command-runner`; ningún componente ni hook llama directo a un repositorio que escribe.** Amplía §30 web-app 1 y la regla 6 de `CLAUDE.md`:
+- Por qué: #107 (logout con `obtenerRegistroPorId` pendiente: el `PUT` siguiente modificó el registro del cliente anterior con el JWT de la cuenta nueva), ya visto en #63, #73 y #77; #102 (`LoginPage.tsx`). Desde que los comandos pasan por el runner, esta familia bajó de 8 a 2.
+- Cómo se verifica: prueba con dos `await` y el logout entre el primero y el segundo.
+- Control: `no-restricted-imports` que impida importar `**/data/*.repository` y `**/case-commands` desde `components/**` y `hooks/**` (pendiente: tarjeta). Adversary: «por cada `await` del diff, ¿qué pasa si entre medio hubo logout o cambio de pestaña?».
+
+**5. Lo que se ve es lo que se envía y lo que el API acepta: un control editable termina en el request o se muestra como solo lectura; el esquema zod de una respuesta acepta todo lo que el request puede producir (`null` incluido); un mapper no tira campos sin un comentario; cada etiqueta usa el campo que dice su nombre.**
+- Por qué: #108 (el selector de relacion era editable en «Registrar interacción única» pero `buildInput()` no lo mandaba: decía «guardado» y el relacion se perdía; `mapCoreRegistroToRegistroResumenDto` sin `relacionCodigo`), #73 (zod rechazaba `tipoServicioId: null` después de un POST exitoso), #103 (`registro.autor` mostrado como «Asignado a»), #104 y #107.
+- Cómo se verifica: por cada campo del formulario, una prueba que lo cambia y lo encuentra en el request.
+- Control: test de ida y vuelta con fast-check por mapper y test por esquema (`apiCoreRegistroSchema.parse` de la respuesta a un request con nulls). Pendiente: tarjeta.
+
+**6. El «ocupado» de una acción compuesta abarca todos sus pasos (autoguardado + cierre, POST + recarga), y el bloqueo es un `<fieldset disabled>` sobre el bloque entero, como en `EventoStrip`.** Amplía §30 web-app 2 y 4:
+- Por qué: #103 (`CloseCaseDialog.tsx`: con el borrador autoguardándose, un doble clic en «Guardar y cerrar» duplicó la interacción en la historial), #94, #73, #63 y #67.
+- Cómo se verifica: prueba «doble clic con la promesa pendiente → una sola llamada al repositorio».
+- Control: checklist de QA, con evidencia: cada diálogo con submit nombra ese test. El helper compartido `esperaUnaSolaLlamada(accion, mockRepo)`: pendiente: tarjeta.
+
+**7. Toda función que recibe un `caseId` maneja el prefijo `busqueda-` con rama y test propios, y el resultado de una escritura que el agente necesita para recuperarse (id creado, 409, recarga fallida) vive en el store de la sesión, no en un `useState`.** Amplía §30 web-app 6, 12 y 13:
+- Por qué: #67 (reabrir desde una ficha `busqueda-*` dejó una pestaña duplicada con el registro cerrado), #69, #73 (el id creado y el fallo de recarga se perdían al cambiar de pestaña), #103 y #63.
+- Cómo se verifica: prueba que dispara la operación, cambia de pestaña, vuelve y ve el aviso.
+- Control: tipo marcado `SyntheticCaseId` / `RealCaseId` que hace fallar `tsc`, y generador fast-check con ids `busqueda-*` en `AgentConsoleProvider.propiedades.test.tsx`. Pendiente: tarjeta.
+
+**8. El filtro `esActivo` nunca va en el repositorio ni en un hook compartido: solo en el `useMemo` que arma las opciones de un `<select>` de alta.** Precisa §19 y §30 web-app 8, que no nombraban el repositorio:
+- Por qué: #109 (`catalog.api-repository.ts` filtraba los subregistros inactivos y un registro viejo dejó de mostrar su clasificación), #103 (tipo de servicio desactivado → «Sin tipo de registro»), #67 y #73.
+- Cómo se verifica: test del repositorio «devuelve también los inactivos».
+- Control: ese test en `catalog.api-repository.test.ts` por catálogo y `no-restricted-syntax` sobre `.filter(` con `esActivo` en `src/features/catalogs/data/**`. Pendiente: tarjeta.
+
+### Proceso
+
+**P1. Se corrige la familia, no el hallazgo: antes de responder «corregido» a un hilo de Codex, se busca el mismo patrón en todo el repo y en los flujos hermanos, y la respuesta dice dónde se buscó («también en X e Y; no aplica en Z porque…»).** Se suma a §32.
+- Por qué: 13 de los 98 hallazgos de api-core fueron Codex volviendo sobre el mismo punto con «evidencia nueva» (#71 sola, 6; también #50, #57, #76 y #80). En web-app, #98 se mergeó con 3 hilos sin responder.
+- Cómo se verifica: la respuesta del hilo trae la línea «Dónde más se buscó».
+- Control: campo «Dónde más se buscó» en la plantilla de respuesta de `/supercodex`, que no publica si está vacío, y chequeo de hilos abiertos en `/listo-para-merge`. Pendiente: tarjeta.
+
+**P2. En un record posicional de ASP.NET Core, el atributo de validación va en el parámetro (`[Required] string X`), nunca con `[property: Required]`: con `[property:]` MVC lanza `InvalidOperationException` y todo el endpoint responde 502. Swashbuckle no lee el atributo del parámetro; lo resuelve `RequiredDeParametroDeRecordSchemaFilter`.**
+- Por qué: api-core #82.
+- Cómo se verifica: un test que llama de verdad al endpoint con el record (no solo al handler), y Swagger muestra el campo como obligatorio.
+- Control: test de arquitectura que falla ante `[property: Required` (o cualquier `[property:` de `System.ComponentModel.DataAnnotations`) en un record de `Rest`. Pendiente: tarjeta.
+
+**P3. Antes de aceptar, quitar o reponer un campo del relacion HTTP por un hallazgo de revisión, se lee el handler, no solo el record o el DTO.**
+- Por qué: web-app #109. `ConvertirEnRegistro` tiene `RelacionCodigo` en el record solo para rechazarlo con 400; reponerlo en la web habría roto toda conversión.
+- Cómo se verifica: la respuesta al hilo cita la línea del handler que usa (o rechaza) el campo.
+- Control: checklist de QA y de la respuesta en `/supercodex`, con la cita `archivo:línea` del handler.
+
+**P4. Un hallazgo de Codex que contradice un límite aceptado en un run doc o una regla de negocio vigente no se implementa: se responde en el hilo citando la decisión.**
+- Por qué: «crear el registro ya cerrado» choca con la regla vigente de que el registro nuevo nace En atención; «restaurar las pestañas de búsqueda al recargar» era un límite aceptado en `docs/agent-runs/0122`, se implementó igual y generó 6 P2 en cadena hasta revertirlo.
+- Cómo se verifica: antes de tocar código por un hallazgo, se busca en el run doc de la tarjeta y en `CLAUDE.md` si ya hay una decisión sobre ese punto.
+- Control: checklist de `/supercodex`: cada hallazgo se marca «aplica» o «decisión previa: <ruta o regla>».
+
+**P5. Partir un PR en una pila nunca separa una migración de la que la elimina o la reemplaza.**
+- Por qué: api-core #85. Si A1 trae la migración X y A2 la borra, desplegar A1 solo deja X aplicada y bloquea A2. Se juntaron en un solo PR.
+- Cómo se verifica: al armar la pila, `git log --stat -- Persistence/Migrations` por cada PR: ninguna migración aparece agregada en uno y borrada en otro.
+- Control: checklist del plan cuando el cambio se parte en varios PRs (ver §21).
+
+**P6. Un test inestable se registra y se estabiliza; no se reintenta a ciegas hasta que pase.**
+- Por qué: `TrazabilidadHistoricaTests.Registro_TresVersiones_AsOfDevuelveCadaVersion` falló 1 vez y pasó 2 de 2 aislado (16/10).
+- Cómo se verifica: el reporte dice «inestable conocido» con el nombre del test, no «verde tras reintento».
+- Control: tarjeta para estabilizarlo. Pendiente: tarjeta.
+
+**P7. Las suites de integración con Testcontainers corren de a una por máquina.**
+- Por qué: el 16/10, tres en paralelo levantaron 19 contenedores de SQL Server y la máquina se quedó sin memoria.
+- Cómo se verifica: antes de lanzar una suite, `docker ps --filter ancestor=mcr.microsoft.com/mssql/server` sale vacío.
+- Control: checklist del orquestador al paralelizar coders y QA: el modo enjambre no paraleliza la integración.
+
+**P8. Un script bash no se edita mientras corre: bash lo lee a medida que ejecuta y el cambio rompe la corrida en curso. Se copia a un archivo nuevo y se edita la copia.**
+- Por qué: 16/10, al ajustar un script del flujo con una corrida viva.
+- Cómo se verifica: antes de editar, comprobar que el script no está corriendo.
+- Control: checklist; no tiene un control automático razonable.
+
+---
+
+## 34. Tests de integración: un solo SQL Server y tests de migración de vida corta
+
+*(2026-10-23, api-core #104, aprobado por el responsable.)*
+
+18 tests de migración levantaban cada uno su propio SQL Server en Docker. La integración tenía 109 tests y tardaba ~203 s. Además, 18 de esos tests probaban migraciones ya aplicadas en dev: no podían volver a fallar y se pagaban en cada corrida. El #104 pasó a un `ServidorSqlCompartido` (un contenedor perezoso para todo el ensamblado; `CrearBaseNuevaAsync` crea una base `mig_<guid>` por test), retiró los 18 tests muertos y el CI corre la integración solo si el PR toca la base. Quedó en 90 tests y ~57 s.
+
+**I1. Un test de integración solo si lo probado necesita SQL Server real.**
+- Por qué: concurrencia y bloqueos, índices únicos, SQL escrito a mano, tablas temporales o de historial, y una migración que transforma datos con filas previas. Todo lo demás es unitario y corre en milisegundos.
+- Cómo se verifica: el plan dice cuál de los cinco motivos aplica a cada test de integración (`planner.md`, punto 6).
+- Control: QA lo marca como hallazgo (`qa.md`); `flujo.sh gate` avisa cada archivo nuevo en `api-core.IntegrationTests/` y pide una línea de justificación en el run doc.
+
+**I2. Nunca un contenedor nuevo por test o por clase.**
+- Por qué: cada contenedor suma ~10 s de arranque y memoria; 18 de ellos eran la mayor parte de los 203 s.
+- Cómo se verifica: `MsSqlBuilder` aparece solo en `DatabaseFixture.cs` (tests normales, colección `Integration`) y `ServidorSqlCompartido.cs` (tests de migración, `CrearBaseNuevaAsync`).
+- Control: `flujo.sh gate` **bloquea** si el diff agrega `MsSqlBuilder` en otro archivo, antes de correr suites y revisores.
+
+**I3. Un test de migración nace con fecha de retiro: se borra en el PR siguiente a aplicar su migración en todas las bases.**
+- Por qué: una vez aplicada, la migración no vuelve a correr sobre datos reales; el test solo cuesta tiempo.
+- Cómo se verifica: el test nombra la migración anterior a la que prueba (`"<14 dígitos>_<Nombre>"`); si después de ella hay 2 o más migraciones en el repo, o la probada tiene más de 14 días (`FLUJO_DIAS_TEST_MIGRACION`), casi seguro ya se aplicó.
+- Control: `flujo.sh gate` lo avisa sin conectarse a ninguna base; se confirma en dev y se retira. Sigue vigente la regla del coder: una migración que agrega una columna a una tabla con filas se entrega con su test de integración (api-core #70); lo que cambia es que ese test también vence.
+
+## 35. Las reglas de negocio no leen texto: deciden por códigos guardados (2026-10-28)
+
+Complementa la sección 31. Origen: en api-core #111 el bloqueo de constancias del sistema decidía por el inicio del `Detalle` («Cierre de registro…», «Registro reabierto…»); la app comparaba distinguiendo mayúsculas y SQL Server no, así que un agente podía saltarse el bloqueo escribiendo en minúsculas y mover una interacción se rechazaba por error. el responsable decidió quitar toda regla por texto.
+
+**T1. Ninguna decisión de negocio mira un texto legible.**
+- Por qué: el texto lo escribe una persona o cambia con una traducción, un ajuste de redacción o el idioma; las mayúsculas, espacios y collation hacen que la misma regla dé distinto en memoria y en SQL.
+- Qué cuenta como decisión: permisos, qué se puede editar, anular, cerrar o mover, qué se cuenta, qué se filtra, qué estado tiene algo.
+- En su lugar: un código o id estable guardado (columna `Origen`, `EstadoRegistro.Codigo`, `Canal.Codigo`, enums con `[Code]`). Si no existe, se agrega la columna y se migra, no se infiere del texto.
+
+**T2. Prohibido en reglas:** `StartsWith`/`Contains`/`Equals`/`==`/`includes`/regex sobre `Detalle`, `Descripcion`, `Comentario`, `Nota`, `Motivo`, nombres o etiquetas de catálogo; comparar contra literales en español («Cerrado», «MensajeriaExterna», «Supervisor»…); armar un texto en el back que el front vuelve a partir («anterior → nuevo»).
+- Excepción única y temporal: un respaldo para filas viejas sin código, solo hasta migrarlas una vez con el texto exacto que generaba el sistema; la migración lleva su test y el respaldo se borra en el mismo PR o el siguiente.
+
+**T3. Lo que el sistema genera nace con su código.**
+- Cómo se verifica: toda constancia automática (asignación, cierre, reapertura, movimiento) se guarda con su `Origen` propio; solo `MANUAL` es gestión del agente. El texto es solo para mostrar.
+
+**T4. El front decide por el código que manda el API.**
+- Si el API no manda el código que hace falta, se pide al back; no se reconstruye desde la descripción.
+
+- Control: el revisor (QA, Codex y adversary) marca como hallazgo cualquier regla nueva que compare texto; el checklist de `AGENTS.md` de api-core y web-app lo incluye.
+
+## 36. Reglas aprendidas en los PRs del 28/10 (api-core #111, web-app #147, #150, #130)
+
+Están también en el `AGENTS.md` de cada repo para que Codex y los revisores las marquen.
+
+**web-app**
+- **W1. Solo una lista completa confirma una retirada.** Recarga fallida o `Parcial`/`NoDisponible` → se usa la última lista completa; no se descarta un registro o relacion elegido (#147, 4 P2).
+- **W2. Tras un 409 no se pierde lo escrito.** Campos no tocados toman lo nuevo, los cambiados se mantienen, el reintento usa la versión releída (#150).
+- **W3. Respuesta perdida, nada afirmado.** Sin respuesta no se anuncia éxito ni fallo: se relee (#150, fila fantasma).
+- **W4. Foco en tests con `waitFor`;** un test lento no se arregla solo subiendo el timeout (#130, Notes/EditNoteDialog).
+- **W5. Test sin DOM → `.test.ts`** (#130).
+- **W6. Archivos generados:** encabezado, `linguist-generated=true`, no se editan a mano.
+
+**api-core**
+- **A1. Situación esperada nunca es 500/502:** 400 validación, 404 no existe/anulado, 409 conflicto/cerrado/versión vieja, con mensaje en español (#111).
+- **A2. Reglas propias antes que servicios externos;** nunca HTTP con una fila bloqueada (#111).
+- **A3. Registro anulado: mismo aviso en todos los comandos** (#111).
+- **A4. Texto libre con tope de largo** si se guarda, sobre todo si se replica o va al historial (#111, motivo 1000).
+- **A5. Misma regla en memoria y en SQL** (mayúsculas, espacios, collation) (#111).
+
+**Ambos**
+- **B1. Un hallazgo que contradice un REQ, un ADR o una decisión anotada no se corrige:** se consulta al dueño del producto (el responsable, 2026-10-28).
+
+## 37. Una sola migración por PR mientras no esté aplicada (2026-10-28)
+
+Origen: api-core #111 llegó a ~11.900 líneas; 7.844 eran archivos `*.Designer.cs` autogenerados (uno de ~1.950 líneas por cada una de sus 4 migraciones). El código real eran 882 líneas.
+
+**M1. Un PR lleva una sola migración.** Si durante el desarrollo se agregan varias, antes de pedir revisión se juntan en una (borrar las del PR y regenerar con `dotnet ef migrations add`), siempre que no se hayan aplicado en una base compartida (dev, QA, prod). Las bases locales y de Testcontainers no cuentan.
+- Cómo se verifica: `git diff --name-only origin/develop... -- Persistence/Migrations/*.cs` muestra a lo sumo una migración nueva (más su Designer y el snapshot).
+- Si ya se aplicó en una base compartida: no se junta; se deja como está y se anota en el PR.
+
+**M2. Los archivos generados no cuentan como tamaño del PR, pero sí pesan:** van marcados `linguist-generated=true` (`*.Designer.cs` y `*ModelSnapshot.cs`) para que GitHub los colapse.
+
+**M3. Un PR que pasa de ~3.000-4.000 líneas sin contar generados se parte** en PRs encadenados (modelo y migración primero, después cada flujo), cada uno con sus rondas de Codex.

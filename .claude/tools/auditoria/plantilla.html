@@ -1,0 +1,754 @@
+<title>Salud de arquitectura de AcmeOrg</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  --ground: #f4f6f8;
+  --surface: #fcfcfb;
+  --raised: #ffffff;
+  --ink: #10161d;
+  --ink-2: #4d5763;
+  --ink-3: #6f7985;
+  --line: #dde2e8;
+  --line-strong: #c3cad3;
+  --zone: #e9ecf0;
+  --web: #2a78d6;
+  --api: #eb6834;
+  --good-ink: #0a6e0a;
+  --warning-ink: #8a5a00;
+  --critical-ink: #a42a2a;
+  --chip-good: #e3f4e3;
+  --chip-warning: #fdf1d4;
+  --chip-critical: #fbe3e3;
+  --font: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #111315; --surface: #1a1a19; --raised: #1f2023;
+    --ink: #eef0f3; --ink-2: #b3bbc6; --ink-3: #8e97a3;
+    --line: #2e3238; --line-strong: #454b53; --zone: #25282c;
+    --web: #3987e5; --api: #d95926;
+    --good-ink: #5fd35f; --warning-ink: #f5c04a; --critical-ink: #f08a8a;
+    --chip-good: #16301a; --chip-warning: #372b10; --chip-critical: #3a1b1b;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #111315; --surface: #1a1a19; --raised: #1f2023;
+  --ink: #eef0f3; --ink-2: #b3bbc6; --ink-3: #8e97a3;
+  --line: #2e3238; --line-strong: #454b53; --zone: #25282c;
+  --web: #3987e5; --api: #d95926;
+  --good-ink: #5fd35f; --warning-ink: #f5c04a; --critical-ink: #f08a8a;
+  --chip-good: #16301a; --chip-warning: #372b10; --chip-critical: #3a1b1b;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font: 15px/1.55 var(--font); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 64px; display: grid; gap: 40px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h1 { font-size: 30px; line-height: 1.15; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 700; }
+h3 { font-size: 15px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+a { color: inherit; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+header { display: grid; gap: 10px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); }
+.meta b { font-weight: 600; color: var(--ink); }
+section { display: grid; gap: 16px; }
+.section-head { display: grid; gap: 6px; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; display: inline-block; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* Puntaje */
+.score { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px; display: grid; grid-template-columns: minmax(220px, 1fr) minmax(280px, 2fr); gap: 24px; align-items: center; }
+.score-main { display: grid; gap: 4px; }
+.score-big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.score-big .n { font: 600 64px/1 var(--mono); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.score-big .de { font: 500 18px var(--mono); color: var(--ink-3); }
+.score-repos { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; }
+.score-repo { display: grid; gap: 2px; }
+.score-repo .n { font: 600 22px var(--mono); font-variant-numeric: tabular-nums; }
+.score-repo .lbl { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--ink-2); }
+.delta { font: 600 13px var(--mono); display: inline-flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums; }
+.delta.up { color: var(--good-ink); }
+.delta.down { color: var(--critical-ink); }
+.delta.same { color: var(--ink-3); }
+.trend-wrap { display: grid; gap: 6px; }
+.trend-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); }
+.trend-legend span { display: inline-flex; gap: 6px; align-items: center; }
+.key-line { width: 16px; height: 0; border-top: 2px solid; display: inline-block; }
+
+/* Resumen */
+.repos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+.repo { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; align-content: start; }
+.repo-head { display: flex; align-items: center; gap: 10px; }
+.repo-head .mono { color: var(--ink-3); margin-left: auto; }
+.checks { display: grid; }
+.check { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding-block: 10px; border-top: 1px solid var(--line); align-items: baseline; }
+.check:first-child { border-top: 0; padding-top: 0; }
+.check .label { font-weight: 500; }
+.check .detail { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); }
+.value { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.antes { font-size: 12px; color: var(--ink-3); }
+.chip { display: inline-flex; align-items: center; gap: 5px; font: 600 11px/1 var(--font); text-transform: uppercase; letter-spacing: .05em; padding: 4px 7px; border-radius: 999px; white-space: nowrap; }
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip.good { background: var(--chip-good); color: var(--good-ink); }
+.chip.warning { background: var(--chip-warning); color: var(--warning-ink); }
+.chip.critical { background: var(--chip-critical); color: var(--critical-ink); }
+.chip.none { background: var(--zone); color: var(--ink-2); }
+
+/* Gráficos */
+.martin { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; position: relative; }
+.panel-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.panel-head .muted { font-size: 13px; }
+svg.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart text { font-family: var(--font); fill: var(--ink-2); font-size: 11px; }
+.chart .axis-title { fill: var(--ink); font-size: 12px; font-weight: 600; }
+.chart .zone-label { fill: var(--ink-3); font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.chart .point-label { fill: var(--ink); font-size: 11px; font-weight: 500; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .frame { stroke: var(--line-strong); fill: none; }
+.chart .zone { fill: var(--zone); }
+.chart .seq { stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
+.chart .dot { stroke: var(--surface); stroke-width: 2; cursor: pointer; }
+.chart .dot:focus { outline: none; stroke: var(--ink); }
+.chart .ghost { fill: none; stroke-width: 1.5; opacity: .55; }
+.chart .move { stroke-width: 1.5; opacity: .45; }
+.chart .hit { fill: transparent; cursor: pointer; }
+.chart .serie { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .serie.global { stroke: var(--ink); stroke-width: 2.5; }
+.chart .end-label { font-size: 11.5px; font-weight: 600; fill: var(--ink); }
+.tip { position: absolute; pointer-events: none; background: var(--raised); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 8px; padding: 8px 10px; font-size: 12px; line-height: 1.45; box-shadow: 0 6px 20px rgb(0 0 0 / .12); min-width: 190px; z-index: 2; }
+.tip b { font-weight: 600; }
+.tip .row { display: flex; justify-content: space-between; gap: 14px; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.explain { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 24px; font-size: 13.5px; color: var(--ink-2); }
+.explain b { color: var(--ink); font-weight: 600; }
+
+/* Tablas */
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab { font: 600 13px var(--font); padding: 7px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; display: inline-flex; gap: 7px; align-items: center; }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.tab:focus-visible, summary:focus-visible { outline: 2px solid var(--web); outline-offset: 2px; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 12px; font-weight: 600; color: var(--ink-2); background: var(--surface); }
+td.n, th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: 0; }
+.dbar { display: inline-block; width: 70px; height: 6px; border-radius: 3px; background: var(--zone); vertical-align: middle; margin-left: 8px; overflow: hidden; }
+.dbar i { display: block; height: 100%; background: var(--ink-3); }
+
+/* Hallazgos */
+.findings { display: grid; gap: 10px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+summary { cursor: pointer; padding: 12px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary::before { content: "▸"; color: var(--ink-3); transition: transform .15s; }
+details[open] summary::before { transform: rotate(90deg); }
+summary .grow { flex: 1; min-width: 180px; font-weight: 600; }
+.detail-body { padding: 0 16px 16px; display: grid; gap: 10px; }
+.detail-body p { font-size: 13.5px; color: var(--ink-2); }
+.list { display: grid; font-size: 13px; }
+.list > div { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 6px 0; border-top: 1px solid var(--line); }
+.list .path { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+.list .n { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+footer { font-size: 13px; color: var(--ink-2); display: grid; gap: 6px; }
+@media (max-width: 720px) { .score { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .wrap { padding-inline: 16px; } h1 { font-size: 25px; } .score-big .n { font-size: 52px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Auditoría de arquitectura · origin/develop</span>
+    <p class="muted">Los planes, hallazgos y cifras estáticos de esta plantilla son ejemplos anonimizados; sustitúyelos por los de tu proyecto. Las mediciones dinámicas se cargan desde los datos del informe.</p>
+    <h1>Salud de arquitectura de AcmeOrg</h1>
+    <p class="muted">Qué tan limpia está la arquitectura de <b>web-app</b> y <b>api-core</b>, medición tras medición: reglas de dependencias, el gráfico de Robert C. Martin, tamaño, complejidad, duplicación y código muerto. Solo mide; nada de esto bloquea el CI.</p>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <section aria-labelledby="t-puntaje">
+    <h2 id="t-puntaje" class="eyebrow" style="font-size:12px">Puntaje global</h2>
+    <div class="score" id="score"></div>
+  </section>
+
+  <section aria-labelledby="t-semana">
+    <div class="section-head">
+      <h2 id="t-semana">Semana a semana</h2>
+      <p class="muted">La última medición de cada semana (lunes a domingo) y cuánto cambió contra la semana anterior. Sirve para ver si el refactor por olas se nota en los números.</p>
+    </div>
+    <div class="table-wrap"><table id="semanas"></table></div>
+  </section>
+
+  <section aria-labelledby="t-resumen">
+    <div class="section-head">
+      <h2 id="t-resumen">Ahora contra la medición anterior</h2>
+      <p class="muted" id="comparando"></p>
+    </div>
+    <div class="repos" id="repos"></div>
+  </section>
+
+  <section aria-labelledby="t-martin">
+    <div class="section-head">
+      <h2 id="t-martin">Abstracción contra inestabilidad</h2>
+      <p class="muted">El gráfico de Robert C. Martin (<i>Clean Architecture</i>, cap. 14). Cada punto es un módulo; los sanos quedan cerca de la <b>secuencia principal</b>, la diagonal punteada donde A + I = 1. Un círculo hueco con una línea marca dónde estaba el módulo en la medición anterior.</p>
+    </div>
+    <div class="martin" id="martin"></div>
+    <div class="explain">
+      <p><b>Inestabilidad (I)</b> = Ce / (Ca + Ce). Ca: módulos de afuera que dependen de este; Ce: módulos de los que depende. 0 = todos dependen de él y no depende de nadie; 1 = al revés.</p>
+      <p><b>Abstracción (A)</b> = tipos abstractos / total. En TypeScript, <code>interface</code> y <code>type</code> exportados; en C#, <code>interface</code> y <code>abstract class</code>.</p>
+      <p><b>Zona de dolor</b> (abajo a la izquierda): concreto y del que todos dependen; cada cambio rompe a muchos. <b>Zona de inutilidad</b> (arriba a la derecha): abstracciones que casi nadie usa.</p>
+      <p><b>Distancia (D)</b> = |A + I − 1|. 0 es ideal; desde 0,5 conviene mirarlo. Un dominio de entidades concretas cae en la zona de dolor por construcción: preocupa solo si cambia seguido.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-modulos">
+    <div class="section-head">
+      <h2 id="t-modulos">Módulos</h2>
+      <p class="muted">Los mismos puntos del gráfico, ordenados por distancia a la secuencia principal, con su distancia en la medición anterior.</p>
+    </div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="table-wrap"><table id="tabla"></table></div>
+  </section>
+
+  <section aria-labelledby="t-hallazgos">
+    <div class="section-head">
+      <h2 id="t-hallazgos">Hallazgos de la última medición</h2>
+      <p class="muted">El detalle detrás de cada casilla del resumen.</p>
+    </div>
+    <div class="findings" id="hallazgos"></div>
+  </section>
+
+  <section aria-labelledby="t-meta85">
+    <div class="section-head">
+      <h2 id="t-meta85">Meta de 85 puntos: cumplida</h2>
+      <p class="muted">Medido el 30/09 sobre <code>develop</code> con los 10 PRs de calidad ya mergeados (api-core #PR a #PR, web-app #PR a #PR). Antes de mergear: <b>web-app 70, api-core 76, global 73</b>. Ahora: <b>web-app 89, api-core 85, global 87</b>. Misma fórmula de abajo.</p>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th>Estándar</th><th class="n">web-app antes</th><th class="n">web-app ahora</th><th class="n">api-core antes</th><th class="n">api-core ahora</th><th>Qué se resolvió</th></tr>
+      <tr><td>Dependencias</td><td class="n">90</td><td class="n">100</td><td class="n">100</td><td class="n">100</td><td>Los 5 avisos de "feature ajeno por dentro" de web-app quedaron en 0 (#PR)</td></tr>
+      <tr><td>Complejidad &gt; 15</td><td class="n">53</td><td class="n">100</td><td class="n">71</td><td class="n">100</td><td>10 funciones de web-app y 8 de api-core (incluido el <code>Handle</code> de la vista de detalle) bajaron a 0 (web #PR, api #PR)</td></tr>
+      <tr><td>Código muerto</td><td class="n">0</td><td class="n">81</td><td class="n">60</td><td class="n">100</td><td>web-app pasó de 5 archivos y 35 exports sin uso a 4 exports (#PR); api-core quedó en 0 (#PR)</td></tr>
+      <tr><td>Duplicación</td><td class="n">96</td><td class="n">97</td><td class="n">87</td><td class="n">95</td><td>api-core bajó de 0,81 % a 0,31 % (#PR y #PR)</td></tr>
+      <tr><td>Tamaño &gt; 400 líneas</td><td class="n">91</td><td class="n">86</td><td class="n">96</td><td class="n">100</td><td>api-core: <code>ProcessOutboxMessagesJob</code> ya no pasa de 400 (#PR). web-app <b>empeoró</b>: <code>PromoverMensajeModal.tsx</code> subió a 416 líneas al extraer funciones en #PR</td></tr>
+      <tr><td>Distancia de Martin</td><td class="n">60</td><td class="n">64</td><td class="n">29</td><td class="n">29</td><td>Sin cambios en api-core (D 0,50); no se toca a propósito para no inflar el código con interfaces inútiles</td></tr>
+    </table></div>
+
+    <h3>Lo que queda</h3>
+    <p>Nada es bloqueante: los dos repos pasan de 85. Para subir más: partir <code>useMensajeStore.ts</code> (528), <code>PromoverMensajeModal.tsx</code> (416) y <code>MensajesPage.tsx</code> (402), que llevan el tamaño de web-app a 100; borrar los 4 exports de <code>mensajesHubConnection.ts</code>; y la duplicación restante de api-core (4 clones, 32 líneas). Los puntajes anteriores de api-core a la medición con C# no son comparables con los de hoy.</p>
+  </section>
+
+  <section aria-labelledby="t-olas">
+    <div class="section-head">
+      <h2 id="t-olas">Plan de olas: qué se prometió, qué se hizo y qué falta</h2>
+      <p class="muted">Verificado el 26/09/2026 contra <code>origin/develop</code> (el código, no los títulos de los PR). Plan completo en <code>docs/plan-refactor-progresivo.md</code>.</p>
+    </div>
+    <div class="table-wrap"><table id="olas"></table></div>
+    <div class="section-head"><h3>Inventario de código raro</h3></div>
+    <div class="table-wrap"><table id="inventario"></table></div>
+  </section>
+
+  <section aria-labelledby="t-practicas">
+    <div class="section-head">
+      <h2 id="t-practicas">Prácticas de ingeniería: auditoría del 21/09 y cómo va hoy</h2>
+      <p class="muted">Seis ejes contra el playbook de Microsoft y las prácticas de code review de Google. Puntaje del 21/09: <b>5,3 / 10</b>. Cada hallazgo, con su estado verificado hoy.</p>
+    </div>
+    <div class="table-wrap"><table id="practicas"></table></div>
+  </section>
+
+  <section aria-labelledby="t-enterprise">
+    <div class="section-head">
+      <h2 id="t-enterprise">Referencia enterprise .NET 10: qué mira el mercado</h2>
+      <p class="muted">Investigación en GitHub, Microsoft Learn y documentación oficial (26/09). Cada fila es un hallazgo confirmado en fuente; lo que no se pudo confirmar está en el informe completo. Lo de la columna "Para nosotros" es una lectura contra lo que ya sabemos del proyecto, no una auditoría del código.</p>
+    </div>
+    <div class="table-wrap"><table id="enterprise"></table></div>
+  </section>
+
+  <section aria-labelledby="t-historial">
+    <div class="section-head">
+      <h2 id="t-historial">Historial</h2>
+      <p class="muted">Cada fila es una medición de <code>develop</code>. Las anteriores al 23/09 se reconstruyeron midiendo el commit de <code>develop</code> de esa fecha.</p>
+    </div>
+    <div class="table-wrap"><table id="historial"></table></div>
+  </section>
+
+  <section aria-labelledby="t-formula">
+    <div class="section-head">
+      <h2 id="t-formula">Cómo se calcula el puntaje</h2>
+      <p class="muted">Cada estándar vale de 0 a 100 y pesa lo que dice la tabla. Si un repo no tiene cómo medir un estándar (la complejidad de C#, por ejemplo), su peso se reparte entre los demás en vez de contar como cero. El global es el promedio de los dos repos. La fórmula es fija: si cambia, el historial deja de ser comparable.</p>
+    </div>
+    <div class="table-wrap"><table id="formula"></table></div>
+  </section>
+
+  <footer>
+    <p>Se mide con <code>python .claude/tools/auditoria/medir.py</code> (una medición nueva en <code>historial/</code>) y se arma con <code>python .claude/tools/auditoria/render.py</code>. Las herramientas corren con <code>npx</code> desde <code>.worktrees/web-app--auditoria</code>; en los repos no se instala nada.</p>
+  </footer>
+</div>
+
+<script type="application/json" id="datos">__DATOS__</script>
+<script>
+(function () {
+  const H = JSON.parse(document.getElementById("datos").textContent);
+  const D = H[H.length - 1];
+  const P = H.length > 1 ? H[H.length - 2] : null;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const fmt = (n, d = 2) => Number(n).toFixed(d).replace(".", ",");
+  const fecha = (f) => { const [y, m, d] = f.split("-"); return `${d}/${m}/${y}`; };
+  const REPOS = [
+    { key: "web", nombre: "web-app", color: "var(--web)" },
+    { key: "api", nombre: "api-core", color: "var(--api)" },
+  ];
+
+  // ---------------------------------------------------------------- puntaje
+  const clamp01 = (x) => Math.max(0, Math.min(1, x));
+  const lineal = (valor, cero) => Math.round(100 * (1 - clamp01(valor / cero)));
+  const FORMULA = [
+    { key: "dependencias", nombre: "Regla de dependencias", peso: 30, regla: "100 − 20 por error − 2 por aviso" },
+    { key: "martin", nombre: "Distancia a la secuencia principal", peso: 20, regla: "100 con D promedio 0; 0 con D promedio ≥ 0,7" },
+    { key: "tamano", nombre: "Archivos > 400 líneas", peso: 15, regla: "100 con 0 %; 0 con ≥ 10 % de los archivos" },
+    { key: "complejidad", nombre: "Funciones con complejidad > 15", peso: 15, regla: "100 con ninguna; 0 con 1 cada 10 archivos" },
+    { key: "duplicacion", nombre: "Duplicación", peso: 10, regla: "100 con 0 %; 0 con ≥ 6 %" },
+    { key: "muerto", nombre: "Código muerto", peso: 10, regla: "100 con nada; 0 con ≥ 5 % de los exports sin uso" },
+  ];
+  const promedioD = (mods) => mods.reduce((s, m) => s + m.d, 0) / mods.length;
+  function partes(s, key) {
+    const r = s[key], o = {};
+    if (key === "web") {
+      const dep = r.dependencias;
+      if (dep && dep.medido) {
+        const err = dep.violaciones.filter((v) => v.severidad === "error").length;
+        o.dependencias = Math.max(0, 100 - 20 * err - 2 * (dep.violaciones.length - err));
+        if (dep.modulos.length) o.martin = lineal(promedioD(dep.modulos), 0.7);
+      }
+      const c = r.complejidad;
+      if (c && c.medido && r.tamano && r.tamano.medido) o.complejidad = lineal(c.funciones.length / r.tamano.total, 0.1);
+      const k = r.codigo_muerto;
+      if (k && k.medido && k.exports_totales) o.muerto = lineal((k.exports.length + k.archivos.length) / k.exports_totales, 0.05);
+    } else {
+      const c = r.capas;
+      if (c && c.medido) {
+        o.dependencias = Math.max(0, 100 - 20 * c.violaciones.length);
+        if (c.modulos.length) o.martin = lineal(promedioD(c.modulos), 0.7);
+      }
+      const cx = r.complejidad;
+      if (cx && cx.medido && r.tamano && r.tamano.medido) o.complejidad = lineal(cx.funciones.length / r.tamano.total, 0.1);
+      const km = r.codigo_muerto;
+      if (km && km.medido && km.exports_totales) o.muerto = lineal(((km.exports || []).length + (km.miembros || []).length) / km.exports_totales, 0.05);
+    }
+    if (r.tamano && r.tamano.medido) o.tamano = lineal(r.tamano.grandes.length / r.tamano.total, 0.1);
+    if (r.duplicacion && r.duplicacion.medido) o.duplicacion = lineal(r.duplicacion.porcentaje, 6);
+    return o;
+  }
+  function puntaje(s, key) {
+    const o = partes(s, key);
+    let peso = 0, suma = 0;
+    for (const f of FORMULA) if (o[f.key] != null) { peso += f.peso; suma += f.peso * o[f.key]; }
+    return peso ? Math.round(suma / peso) : null;
+  }
+  function global(s) {
+    const v = REPOS.map((r) => puntaje(s, r.key)).filter((x) => x != null);
+    return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null;
+  }
+  function delta(ahora, antes, mayorEsMejor = true, dec = 0) {
+    if (antes == null || ahora == null) return "";
+    const d = ahora - antes;
+    if (Math.abs(d) < 1e-9) return `<span class="delta same" title="Igual que antes">= </span>`;
+    const mejor = mayorEsMejor ? d > 0 : d < 0;
+    return `<span class="delta ${mejor ? "up" : "down"}" title="${mejor ? "Mejoró" : "Empeoró"}">${d > 0 ? "▲" : "▼"} ${fmt(Math.abs(d), dec)}</span>`;
+  }
+
+  $("meta").innerHTML =
+    `<span>Última medición <b>${fecha(D.fecha)}</b></span>` +
+    `<span>web-app <b class="mono">${esc(D.web.sha)}</b></span>` +
+    `<span>api-core <b class="mono">${esc(D.api.sha)}</b></span>` +
+    `<span><b>${H.length}</b> mediciones desde ${fecha(H[0].fecha)}</span>`;
+
+  // ---- Tendencia del puntaje
+  function tendencia() {
+    const W = 560, HH = 190, M = { t: 14, r: 64, b: 28, l: 34 };
+    const PW = W - M.l - M.r, PH = HH - M.t - M.b;
+    const n = H.length;
+    const x = (i) => M.l + (n === 1 ? PW / 2 : (i * PW) / (n - 1));
+    const y = (v) => M.t + (1 - v / 100) * PH;
+    let s = `<svg class="chart" viewBox="0 0 ${W} ${HH}" role="img" aria-label="Puntaje por medición">`;
+    for (const t of [0, 25, 50, 75, 100]) s += `<line class="grid" x1="${M.l}" x2="${M.l + PW}" y1="${y(t)}" y2="${y(t)}"/><text x="${M.l - 6}" y="${y(t) + 4}" text-anchor="end">${t}</text>`;
+    H.forEach((m, i) => { s += `<text x="${x(i)}" y="${HH - 8}" text-anchor="middle">${fecha(m.fecha).slice(0, 5)}</text>`; });
+    const series = [
+      ...REPOS.map((r) => ({ nombre: r.nombre, cls: "", color: r.color, v: H.map((m) => puntaje(m, r.key)) })),
+    ];
+    const finales = [];
+    for (const se of series) {
+      const pts = se.v.map((v, i) => (v == null ? null : [x(i), y(v)])).filter(Boolean);
+      if (pts.length > 1) s += `<polyline class="serie ${se.cls}" stroke="${se.color}" points="${pts.map((p) => p.join(",")).join(" ")}"/>`;
+      se.v.forEach((v, i) => { if (v != null) s += `<circle cx="${x(i)}" cy="${y(v)}" r="${i === n - 1 ? 4.5 : 3}" fill="${se.color}" stroke="var(--surface)" stroke-width="2"><title>${se.nombre} ${fecha(H[i].fecha)}: ${v}</title></circle>`; });
+      const ult = se.v[n - 1];
+      if (ult != null) finales.push({ y: y(ult), texto: `${se.nombre} ${ult}` });
+    }
+    finales.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < finales.length; i++) if (finales[i].y - finales[i - 1].y < 13) finales[i].y = finales[i - 1].y + 13;
+    for (const f of finales) s += `<text class="end-label" x="${x(n - 1) + 9}" y="${f.y + 4}">${esc(f.texto)}</text>`;
+    return s + `</svg>`;
+  }
+
+  const gAhora = global(D), gAntes = P ? global(P) : null;
+  $("score").innerHTML =
+    `<div class="score-main"><div class="score-big"><span class="n">${gAhora ?? "—"}</span><span class="de">/ 100</span>${delta(gAhora, gAntes)}</div>` +
+    `<p class="muted">${P ? `Antes: ${gAntes} (${fecha(P.fecha)})` : "Primera medición"}</p>` +
+    `<div class="score-repos">${REPOS.map((r) => { const a = puntaje(D, r.key), b = P ? puntaje(P, r.key) : null; return `<div class="score-repo"><span class="lbl"><span class="swatch" style="background:${r.color}"></span>${r.nombre}</span><span><span class="n">${a ?? "—"}</span> ${delta(a, b)}</span></div>`; }).join("")}</div></div>` +
+    `<div class="trend-wrap">${tendencia()}<div class="trend-legend">${REPOS.map((r) => `<span><i class="key-line" style="border-color:${r.color}"></i>${r.nombre}</span>`).join("")}</div></div>`;
+
+  // ---------------------------------------------------------------- resumen
+  $("comparando").textContent = P ? `Cada casilla muestra el valor de ${fecha(D.fecha)} y, debajo del valor, el de ${fecha(P.fecha)}.` : "Todavía no hay una medición anterior para comparar.";
+  const chip = (estado, texto) => `<span class="chip ${estado}">${esc(texto)}</span>`;
+  const ESTADO = { good: "bien", warning: "revisar", critical: "atender", none: "no medido" };
+  function check(label, valor, estado, detalle, antes) {
+    return `<div class="check"><span class="label">${esc(label)}</span>` +
+      `<span class="value">${valor}${chip(estado, ESTADO[estado])}</span>` +
+      (antes ? `<span class="detail antes" style="grid-column:1/-1;text-align:right">${antes}</span>` : "") +
+      (detalle ? `<span class="detail">${detalle}</span>` : "") + `</div>`;
+  }
+  const noMedido = (label, b) => check(label, "—", "none", esc(b && b.motivo ? b.motivo : "La herramienta no corrió."));
+  const ok = (b) => b && b.medido;
+  const antesDe = (fn) => { if (!P) return ""; try { const v = fn(P); return v == null ? "" : `antes: ${v}`; } catch (_) { return ""; } };
+
+  function resumenWeb(w) {
+    const out = [];
+    const dep = w.dependencias;
+    if (ok(dep)) {
+      const err = dep.violaciones.filter((v) => v.severidad === "error").length, warn = dep.violaciones.length - err;
+      const pd = P && ok(P.web.dependencias) ? P.web.dependencias.violaciones : null;
+      out.push(check("Regla de dependencias", `${err} errores · ${warn} avisos ${delta(dep.violaciones.length, pd && pd.length, false)}`, err ? "critical" : warn ? "warning" : "good",
+        `${dep.archivos_analizados} archivos, ${dep.dependencias} imports. Reglas: dominio puro, infraestructura sin UI, UI sin HTTP, sin ciclos, sin entrar a otro feature.`,
+        antesDe((p) => ok(p.web.dependencias) ? `${p.web.dependencias.violaciones.filter((v) => v.severidad === "error").length} errores · ${p.web.dependencias.violaciones.filter((v) => v.severidad !== "error").length} avisos` : null)));
+    } else out.push(noMedido("Regla de dependencias", dep));
+    out.push(...comunes("web"));
+    const km = w.codigo_muerto;
+    if (ok(km)) {
+      const pk = P && ok(P.web.codigo_muerto) ? P.web.codigo_muerto : null;
+      out.push(check("Código muerto", `${km.archivos.length} archivos · ${km.exports.length} exports ${delta(km.exports.length + km.archivos.length, pk && pk.exports.length + pk.archivos.length, false)}`,
+        km.archivos.length || km.exports.length ? "warning" : "good",
+        `Archivos y exports que nadie importa (knip)${km.exports_totales ? `, de ${km.exports_totales} exports en total` : ""}. Un export usado solo en tests cuenta como muerto.`,
+        pk ? `antes: ${pk.archivos.length} archivos · ${pk.exports.length} exports` : ""));
+    } else out.push(noMedido("Código muerto", km));
+    return out.join("");
+  }
+  function resumenApi(a) {
+    const out = [];
+    const c = a.capas;
+    if (ok(c)) {
+      const pc = P && ok(P.api.capas) ? P.api.capas.violaciones.length : null;
+      out.push(check("Regla de dependencias", `${c.violaciones.length} violaciones ${delta(c.violaciones.length, pc, false)}`, c.violaciones.length ? "critical" : "good",
+        "Ninguna capa importa a una más externa (Domain → Application → Persistence/Services → Rest → Host), leído de los <code>using</code>.", pc != null ? `antes: ${pc} violaciones` : ""));
+    } else out.push(noMedido("Regla de dependencias", c));
+    const t = a.tests_arquitectura;
+    if (ok(t)) {
+      out.push(check("Tests de arquitectura (NetArchTest)", esc(t.conclusion), t.conclusion === "success" ? "good" : "critical",
+        `Última corrida del CI: <a href="${esc(t.url)}" target="_blank" rel="noopener">${esc(t.titulo)}</a> (${esc(t.rama)}). Fija: ${t.reglas.map(esc).join("; ")}. No entra en el puntaje: no hay dato para las mediciones pasadas.`));
+    } else out.push(noMedido("Tests de arquitectura", t));
+    out.push(...comunes("api"));
+    return out.join("");
+  }
+  function comunes(key) {
+    const r = D[key], p = P ? P[key] : null, out = [];
+    const t = r.tamano;
+    if (ok(t)) {
+      const n = t.grandes.length, pt = p && ok(p.tamano) ? p.tamano : null;
+      out.push(check(`Archivos > ${D.limite_lineas} líneas`, `${n} de ${t.total} ${delta(n, pt && pt.grandes.length, false)}`, n === 0 ? "good" : n <= 3 ? "warning" : "critical",
+        n ? `El más grande: <code>${esc(t.grandes[0].archivo.split("/").pop())}</code>, ${t.grandes[0].lineas} líneas. Alarma, no ley (playbook, sección 26).` : "Ninguno pasa el umbral.",
+        pt ? `antes: ${pt.grandes.length} de ${pt.total}` : ""));
+    } else out.push(noMedido(`Archivos > ${D.limite_lineas} líneas`, t));
+    if (r.complejidad) {
+      const c = r.complejidad;
+      if (ok(c)) {
+        const n = c.funciones.length, pc = p && ok(p.complejidad) ? p.complejidad.funciones.length : null;
+        out.push(check(`Funciones con complejidad > ${c.limite}`, `${n} ${delta(n, pc, false)}`, n === 0 ? "good" : n <= 5 ? "warning" : "critical",
+          n ? `Complejidad ${esc(c.tipo)}. La mayor: <code>${esc(c.funciones[0].funcion.replace(/^(Async )?(Arrow )?(F|f)unction /, ""))}</code> con ${c.funciones[0].complejidad}.` : "",
+          pc != null ? `antes: ${pc}` : ""));
+      } else out.push(noMedido("Complejidad", c));
+    }
+    const d = r.duplicacion;
+    if (ok(d)) {
+      const pd = p && ok(p.duplicacion) ? p.duplicacion.porcentaje : null;
+      out.push(check("Duplicación", `${fmt(d.porcentaje)} % ${delta(d.porcentaje, pd, false, 2)}`, d.porcentaje < 3 ? "good" : d.porcentaje <= 5 ? "warning" : "critical",
+        `${d.lineas_duplicadas} de ${d.lineas} líneas en ${d.clones.length} bloques repetidos de 8+ líneas (jscpd). Umbral usual: 3 %.`, pd != null ? `antes: ${fmt(pd)} %` : ""));
+    } else out.push(noMedido("Duplicación", d));
+    return out;
+  }
+  $("repos").innerHTML = REPOS.map((r) => {
+    const a = puntaje(D, r.key), b = P ? puntaje(P, r.key) : null;
+    return `<article class="repo"><div class="repo-head"><span class="swatch" style="background:${r.color}"></span>` +
+      `<h3>${r.nombre}</h3><span class="value" style="margin-left:8px">${a ?? "—"}/100 ${delta(a, b)}</span><span class="mono">${esc(D[r.key].sha)}</span></div>` +
+      `<div class="checks">${r.key === "web" ? resumenWeb(D.web) : resumenApi(D.api)}</div></article>`;
+  }).join("");
+
+  // ---------------------------------------------------------------- Martin
+  const modulosDe = (s, key) => { if (!s) return []; const b = key === "web" ? s.web.dependencias : s.api.capas; return (b && b.modulos) || []; };
+  const W = 380, HH = 380, M = { t: 16, r: 18, b: 46, l: 50 };
+  const PW = W - M.l - M.r, PH = HH - M.t - M.b;
+  const x = (i) => M.l + i * PW, y = (a) => M.t + (1 - a) * PH;
+
+  function martin(repo) {
+    const mods = modulosDe(D, repo.key);
+    const previos = new Map(modulosDe(P, repo.key).map((m) => [m.nombre, m]));
+    const grupos = new Map();
+    for (const m of mods) {
+      const k = m.i.toFixed(3) + "|" + m.a.toFixed(3);
+      if (!grupos.has(k)) grupos.set(k, []);
+      grupos.get(k).push(m);
+    }
+    const ticks = [0, 0.25, 0.5, 0.75, 1];
+    let s = `<svg class="chart" viewBox="0 0 ${W} ${HH}" role="img" aria-label="Abstracción contra inestabilidad de ${repo.nombre}">`;
+    const zr = 0.42;
+    s += `<path class="zone" d="M${x(0)},${y(0)} L${x(zr)},${y(0)} A${zr * PW},${zr * PH} 0 0 0 ${x(0)},${y(zr)} Z"/>`;
+    s += `<path class="zone" d="M${x(1)},${y(1)} L${x(1 - zr)},${y(1)} A${zr * PW},${zr * PH} 0 0 0 ${x(1)},${y(1 - zr)} Z"/>`;
+    for (const t of ticks) {
+      s += `<line class="grid" x1="${x(t)}" x2="${x(t)}" y1="${y(0)}" y2="${y(1)}"/><line class="grid" x1="${x(0)}" x2="${x(1)}" y1="${y(t)}" y2="${y(t)}"/>`;
+      s += `<text x="${x(t)}" y="${y(0) + 16}" text-anchor="middle">${fmt(t, t % 0.5 ? 2 : 1)}</text>`;
+      s += `<text x="${x(0) - 8}" y="${y(t) + 4}" text-anchor="end">${fmt(t, t % 0.5 ? 2 : 1)}</text>`;
+    }
+    s += `<rect class="frame" x="${x(0)}" y="${y(1)}" width="${PW}" height="${PH}"/>`;
+    s += `<line class="seq" x1="${x(0)}" y1="${y(1)}" x2="${x(1)}" y2="${y(0)}"/>`;
+    s += `<text class="zone-label" x="${x(0) + 8}" y="${y(0.3)}">Zona de dolor</text>`;
+    s += `<text class="zone-label" x="${x(1) - 8}" y="${y(0.66)}" text-anchor="end">Zona de inutilidad</text>`;
+    s += `<text class="axis-title" x="${x(0.5)}" y="${HH - 6}" text-anchor="middle">Inestabilidad (I)</text>`;
+    s += `<text class="axis-title" transform="translate(13 ${y(0.5)}) rotate(-90)" text-anchor="middle">Abstracción (A)</text>`;
+    // Rastro: dónde estaba cada módulo en la medición anterior.
+    for (const m of mods) {
+      const p = previos.get(m.nombre);
+      if (!p || (Math.abs(p.i - m.i) < 0.005 && Math.abs(p.a - m.a) < 0.005)) continue;
+      s += `<line class="move" x1="${x(p.i)}" y1="${y(p.a)}" x2="${x(m.i)}" y2="${y(m.a)}" stroke="${repo.color}"/>`;
+      s += `<circle class="ghost" cx="${x(p.i)}" cy="${y(p.a)}" r="4" stroke="${repo.color}"/>`;
+    }
+    let n = 0;
+    const etiquetas = [];
+    for (const [, g] of grupos) {
+      const m = g[0], cx = x(m.i), cy = y(m.a), peor = Math.max(...g.map((q) => q.d));
+      s += `<circle class="hit" cx="${cx}" cy="${cy}" r="12" data-g="${n}"/>`;
+      s += `<circle class="dot" cx="${cx}" cy="${cy}" r="${g.length > 1 ? 6.5 : 5}" fill="${repo.color}" tabindex="0" data-g="${n}" aria-label="${esc(g.map((q) => q.nombre).join(", "))}: I ${fmt(m.i)}, A ${fmt(m.a)}, D ${fmt(peor)}"/>`;
+      if (peor >= 0.5 || repo.key === "api") etiquetas.push({ cx, cy, texto: g[0].nombre.split("/").slice(-2).join("/") + (g.length > 1 ? ` +${g.length - 1}` : "") });
+      n++;
+    }
+    etiquetas.sort((p, q) => p.cy - q.cy);
+    const usadas = [];
+    for (const e of etiquetas) {
+      const derecha = e.cx < x(0.62);
+      let ly = e.cy + 4;
+      while (usadas.some((u) => Math.abs(u.y - ly) < 13 && Math.abs(u.x - e.cx) < 150)) ly += 13;
+      usadas.push({ x: e.cx, y: ly });
+      s += `<text class="point-label" x="${derecha ? e.cx + 10 : e.cx - 10}" y="${ly}" text-anchor="${derecha ? "start" : "end"}">${esc(e.texto)}</text>`;
+    }
+    return { svg: s + `</svg>`, grupos: [...grupos.values()], previos };
+  }
+
+  for (const repo of REPOS) {
+    const mods = modulosDe(D, repo.key);
+    const panel = document.createElement("div");
+    panel.className = "panel";
+    if (!mods.length) {
+      panel.innerHTML = `<div class="panel-head"><span class="swatch" style="background:${repo.color}"></span><h3>${repo.nombre}</h3></div><p class="muted">No medido.</p>`;
+      $("martin").appendChild(panel);
+      continue;
+    }
+    const { svg, grupos, previos } = martin(repo);
+    const dAhora = promedioD(mods), pm = modulosDe(P, repo.key), dAntes = pm.length ? promedioD(pm) : null;
+    panel.innerHTML = `<div class="panel-head"><span class="swatch" style="background:${repo.color}"></span><h3>${repo.nombre}</h3>` +
+      `<span class="muted">${mods.length} ${repo.key === "web" ? "carpetas" : "proyectos"} · D promedio ${fmt(dAhora)} ${delta(dAhora, dAntes, false, 2)}</span></div>${svg}<div class="tip" hidden></div>`;
+    $("martin").appendChild(panel);
+    const tip = panel.querySelector(".tip");
+    const mostrar = (el) => {
+      const g = grupos[+el.dataset.g];
+      tip.innerHTML = g.map((m) => { const p = previos.get(m.nombre); return `<b>${esc(m.nombre)}</b>` +
+        `<div class="row"><span>Ca ${m.ca} · Ce ${m.ce}</span><span>I ${fmt(m.i)}</span></div>` +
+        `<div class="row"><span>${m.abstractos} abstractos / ${m.abstractos + m.concretos}</span><span>A ${fmt(m.a)}</span></div>` +
+        `<div class="row"><span>Distancia${p ? ` (antes ${fmt(p.d)})` : ""}</span><span>D ${fmt(m.d)}</span></div>`; }).join("<hr style='border:0;border-top:1px solid var(--line);margin:6px 0'>");
+      tip.hidden = false;
+      const pr = panel.getBoundingClientRect(), er = el.getBoundingClientRect();
+      let left = er.left - pr.left + 14;
+      if (left + tip.offsetWidth > pr.width - 8) left = er.left - pr.left - tip.offsetWidth - 14;
+      tip.style.left = Math.max(8, left) + "px";
+      tip.style.top = Math.max(8, er.top - pr.top - 10) + "px";
+    };
+    panel.querySelectorAll("[data-g]").forEach((el) => {
+      el.addEventListener("mouseenter", () => mostrar(el));
+      el.addEventListener("focus", () => mostrar(el));
+      el.addEventListener("mouseleave", () => (tip.hidden = true));
+      el.addEventListener("blur", () => (tip.hidden = true));
+    });
+  }
+
+  // ---------------------------------------------------------------- tabla de módulos
+  let actual = "web";
+  function tabla() {
+    const previos = new Map(modulosDe(P, actual).map((m) => [m.nombre, m]));
+    const mods = [...modulosDe(D, actual)].sort((p, q) => q.d - p.d);
+    $("tabla").innerHTML = `<thead><tr><th>Módulo</th><th class="n">Ca</th><th class="n">Ce</th><th class="n">I</th><th class="n">A</th><th class="n">D ${P ? fecha(P.fecha) : "antes"}</th><th class="n">D ${fecha(D.fecha)}</th></tr></thead><tbody>` +
+      mods.map((m) => { const p = previos.get(m.nombre); return `<tr><td class="mono">${esc(m.nombre)}</td><td class="n">${m.ca}</td><td class="n">${m.ce}</td><td class="n">${fmt(m.i)}</td><td class="n">${fmt(m.a)}</td>` +
+        `<td class="n">${p ? fmt(p.d) : "nuevo"}</td><td class="n">${fmt(m.d)} ${p ? delta(m.d, p.d, false, 2) : ""}<span class="dbar"><i style="width:${Math.round(m.d * 100)}%"></i></span></td></tr>`; }).join("") + `</tbody>`;
+    $("tabs").querySelectorAll(".tab").forEach((b) => b.setAttribute("aria-selected", b.dataset.k === actual));
+  }
+  $("tabs").innerHTML = REPOS.map((r) => `<button class="tab" role="tab" data-k="${r.key}"><span class="swatch" style="background:${r.color}"></span>${r.nombre}</button>`).join("");
+  $("tabs").addEventListener("click", (e) => {
+    const b = e.target.closest(".tab");
+    if (!b) return;
+    actual = b.dataset.k;
+    try { localStorage.setItem("auditoria-tab", actual); } catch (_) {}
+    tabla();
+  });
+  try { const t = localStorage.getItem("auditoria-tab"); if (t === "web" || t === "api") actual = t; } catch (_) {}
+  tabla();
+
+  // ---------------------------------------------------------------- hallazgos
+  const bloques = [];
+  function bloque(repo, titulo, estado, cuenta, explicacion, filas) {
+    if (!filas.length) return;
+    bloques.push(`<details><summary><span class="swatch" style="background:${repo.color}"></span><span class="grow">${esc(titulo)}</span>` +
+      `<span class="value">${cuenta}${chip(estado, ESTADO[estado])}</span></summary><div class="detail-body">` +
+      (explicacion ? `<p>${explicacion}</p>` : "") +
+      `<div class="list">${filas.map(([a, b]) => `<div><span class="path">${a}</span><span class="n">${b}</span></div>`).join("")}</div></div></details>`);
+  }
+  const [RW, RA] = REPOS;
+  const dep = D.web.dependencias;
+  if (ok(dep)) {
+    const porRegla = {};
+    for (const v of dep.violaciones) (porRegla[v.regla] = porRegla[v.regla] || []).push(v);
+    for (const [regla, vs] of Object.entries(porRegla)) {
+      bloque(RW, `Regla «${regla}»`, vs[0].severidad === "error" ? "critical" : "warning", `${vs.length}`,
+        regla === "feature-ajeno-por-dentro" ? "Un feature importa algo de la carpeta interna (<code>components</code>, <code>state</code> o <code>data</code>) de otro feature. Lo sano es que lo compartido viva en <code>domain/</code> o se exponga por un punto de entrada público (<code>index.ts</code>)." : "",
+        vs.map((v) => [esc(v.desde.replace("src/", "")) + " → " + esc((v.hacia || v.ciclo.join(" → ")).replace("src/", "")), v.severidad]));
+    }
+  }
+  if (ok(D.api.capas)) bloque(RA, "Capas de api-core", "critical", `${D.api.capas.violaciones.length}`, "", D.api.capas.violaciones.map((v) => [esc(v.desde), esc(v.regla)]));
+  for (const r of REPOS) {
+    const t = D[r.key].tamano;
+    if (ok(t)) bloque(r, `Archivos de más de ${D.limite_lineas} líneas`, t.grandes.length <= 3 ? "warning" : "critical", `${t.grandes.length}`, "Candidatos a partirse por responsabilidad. El número es una alarma para mirar, no una regla.", t.grandes.map((g) => [esc(g.archivo), g.lineas + " líneas"]));
+  }
+  const cx = D.web.complejidad;
+  if (ok(cx)) bloque(RW, `Funciones con complejidad > ${cx.limite}`, cx.funciones.length <= 5 ? "warning" : "critical", `${cx.funciones.length}`,
+    "Complejidad ciclomática: cantidad de caminos por la función. En un componente React cuenta todo el cuerpo, así que un formulario grande suma rápido: la salida suele ser extraer hooks o subcomponentes.",
+    cx.funciones.map((f) => [esc(f.archivo) + ":" + f.linea + " · " + esc(f.funcion), f.complejidad]));
+  for (const r of REPOS) {
+    const d = D[r.key].duplicacion;
+    if (ok(d)) bloque(r, "Bloques duplicados", d.porcentaje < 3 ? "good" : "warning", `${fmt(d.porcentaje)} %`, "", d.clones.map((c) => [esc(c.a) + " ↔ " + esc(c.b), c.lineas + " líneas"]));
+  }
+  const km = D.web.codigo_muerto;
+  if (ok(km)) {
+    bloque(RW, "Archivos que nadie importa", "warning", `${km.archivos.length}`, "Verificar antes de borrar: un archivo puede entrar por configuración y no por import.", km.archivos.map((f) => [esc(f), ""]));
+    bloque(RW, "Exports sin uso", "warning", `${km.exports.length}`, "Un export usado solo por tests o solo dentro de su archivo aparece acá: a veces basta con quitarle el <code>export</code>.", km.exports.map((e) => [esc(e.archivo) + ":" + e.linea, esc(e.nombre)]));
+  }
+  $("hallazgos").innerHTML = bloques.join("");
+
+  // ---------------------------------------------------------------- historial y fórmula
+  $("historial").innerHTML = `<thead><tr><th>Fecha</th><th>Commit web-app</th><th>Commit api-core</th><th class="n">Puntaje web-app</th><th class="n">Puntaje api-core</th><th class="n">Global</th></tr></thead><tbody>` +
+    [...H].reverse().map((m, i, arr) => { const prev = arr[i + 1]; const g = global(m), gp = prev ? global(prev) : null;
+      return `<tr><td>${fecha(m.fecha)}</td><td class="mono">${esc(m.web.sha)}</td><td class="mono">${esc(m.api.sha)}</td>` +
+        `<td class="n">${puntaje(m, "web") ?? "—"}</td><td class="n">${puntaje(m, "api") ?? "—"}</td><td class="n"><b>${g ?? "—"}</b> ${delta(g, gp)}</td></tr>`; }).join("") + `</tbody>`;
+
+  const pw = partes(D, "web"), pa = partes(D, "api");
+  $("formula").innerHTML = `<thead><tr><th>Estándar</th><th class="n">Peso</th><th>Regla</th><th class="n">web-app</th><th class="n">api-core</th></tr></thead><tbody>` +
+    FORMULA.map((f) => `<tr><td>${esc(f.nombre)}</td><td class="n">${f.peso} %</td><td>${esc(f.regla)}</td><td class="n">${pw[f.key] ?? "sin medir"}</td><td class="n">${pa[f.key] ?? "sin medir"}</td></tr>`).join("") +
+    `<tr><td><b>Puntaje</b></td><td class="n">100 %</td><td class="muted">Promedio ponderado de lo medido</td><td class="n"><b>${puntaje(D, "web") ?? "—"}</b></td><td class="n"><b>${puntaje(D, "api") ?? "—"}</b></td></tr></tbody>`;
+
+  // ---------------------------------------------------------------- semana a semana
+  const lunes = (f) => { const d = new Date(f + "T12:00:00"); const dow = (d.getDay() + 6) % 7; d.setDate(d.getDate() - dow); return d.toISOString().slice(0, 10); };
+  const porSemana = new Map();
+  H.forEach((m) => porSemana.set(lunes(m.fecha), m));
+  const SEM = [...porSemana.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const grandes = (m, k) => (m[k].tamano && m[k].tamano.medido ? m[k].tamano.grandes.length : null);
+  const funcs = (m) => (m.web.complejidad && m.web.complejidad.medido ? m.web.complejidad.funciones.length : null);
+  const avisos = (m) => (m.web.dependencias && m.web.dependencias.medido ? m.web.dependencias.violaciones.length : null);
+  const muerto = (m) => (m.web.codigo_muerto && m.web.codigo_muerto.medido ? m.web.codigo_muerto.exports.length + m.web.codigo_muerto.archivos.length : null);
+  const dupl = (m, k) => (m[k].duplicacion && m[k].duplicacion.medido ? m[k].duplicacion.porcentaje : null);
+  const celda = (v, prev, mayor, dec = 0) => `${v == null ? "—" : fmt(v, dec)} ${delta(v, prev, mayor, dec)}`;
+  const pct = (v) => (v == null ? "—" : fmt(v));
+  $("semanas").innerHTML = `<thead><tr><th>Semana del</th><th>Medición</th><th class="n">Puntaje web-app</th><th class="n">Puntaje api-core</th><th class="n">Avisos de dependencias (web)</th><th class="n">Archivos &gt; 400 (web / api)</th><th class="n">Funciones &gt; 15 (web)</th><th class="n">Sin uso (web)</th><th class="n">Duplicación web / api %</th></tr></thead><tbody>` +
+    [...SEM].reverse().map(([lun, m], i, arr) => { const q = arr[i + 1] ? arr[i + 1][1] : null;
+      return `<tr><td>${fecha(lun)}</td><td>${fecha(m.fecha)}</td>` +
+        `<td class="n">${celda(puntaje(m, "web"), q ? puntaje(q, "web") : null, true)}</td>` +
+        `<td class="n">${celda(puntaje(m, "api"), q ? puntaje(q, "api") : null, true)}</td>` +
+        `<td class="n">${celda(avisos(m), q ? avisos(q) : null, false)}</td>` +
+        `<td class="n">${grandes(m, "web") ?? "—"} / ${grandes(m, "api") ?? "—"}</td>` +
+        `<td class="n">${celda(funcs(m), q ? funcs(q) : null, false)}</td>` +
+        `<td class="n">${celda(muerto(m), q ? muerto(q) : null, false)}</td>` +
+        `<td class="n">${pct(dupl(m, "web"))} / ${pct(dupl(m, "api"))}</td></tr>`; }).join("") + `</tbody>`;
+
+  // ---------------------------------------------------------------- trazabilidad
+  const ST = { ok: ["good", "Hecho"], parcial: ["warning", "Parcial"], falta: ["critical", "Falta"], decision: ["none", "Por decisión"], nover: ["none", "No verificado"], hist: ["none", "Histórico"] };
+  const tag = (k) => `<span class="chip ${ST[k][0]}">${ST[k][1]}</span>`;
+  const cod = (t) => esc(t).replace(/`([^`]+)`/g, "<code>$1</code>");
+  const OLAS = [
+    ["1", "Riesgo bajo", "web-app #PR #PR; api-core #PR", "ok", "Hojas del repositorio y mappers fuera, exports muertos borrados, una sola proyección de `Mensaje` (`MensajeMapper`). Nada pendiente."],
+    ["2", "Fronteras entre features", "web-app #PR; api-core #PR", "parcial", "Puntos de entrada de `catalogs` y `records` hechos y analizadores activos (37 avisos corregidos). Quedan ~31 imports a carpetas internas de otro feature (messages→workspace 9, workspace→messages 7, →templates 5, →auth 4). La regla sigue en aviso, no en error."],
+    ["3", "El repositorio de la consola", "web-app #PR; api-core #PR #PR", "parcial", "`workspace.api-repository.ts` pasó de 1.367 a 18 líneas; el estado sale del código de catálogo, sin `atendid`; sin `transferTargets` ni `wait` fijos; piezas comunes del dominio hechas. Siguen sobre complejidad 15: `buildWorkspaceEntity` (48) y `construirEntidadPorIdentificador` (50), en curso hoy con pruebas de caracterización primero."],
+    ["4", "Formularios de la consola", "web-app #PR", "parcial", "`RecordForm` partido en caso nuevo y existente, `ActivityPanel` en piezas, un solo `moveTabFocus`, `shell.helpers.ts` repartido. Queda `RecordFields` con complejidad 39 y `NewRecordForm` con 16."],
+    ["5", "Mensajes", "web-app #PR", "parcial", "`MensajesPage`, `useMensajeStore` y `PromoverMensajeModal` partidos. Quedan `useMensajeStore.ts` con 512 líneas, `MensajesPage.tsx` con 403 y `usePromoverMensajeForm` con complejidad 26. El job de Outbox no se toca (decisión)."],
+    ["6 · PR1", "Cierre: partir y borrar", "web-app #PR", "ok", "`EntityTabs` partido; `App.tsx`, `templates/index.ts` y `view-constants.ts` ya no existen."],
+    ["6 · PR2", "Cierre: componentes compartidos", "web-app #PR (abierto, en revisión de Revisor Principal)", "parcial", "Botón, alerta y tabs unificados, con el arreglo de accesibilidad. Hasta que entre, en `develop` siguen 5 `role=\"tablist\"` copiados e `InlineHint` sin archivo propio."],
+    ["Candado", "Reglas que bloquean", "web-app #PR (abierto, en revisión de Revisor Principal)", "parcial", "Reglas de `dependency-cruiser` y `npm run depcruise` en el repo. Sin conectar al CI: el push del workflow lo rechazó GitHub por falta de permiso. Pausado por decisión del responsable."],
+  ];
+  $("olas").innerHTML = `<thead><tr><th>Ola</th><th>Tema</th><th>PR</th><th>Estado</th><th>Qué se hizo y qué falta</th></tr></thead><tbody>` +
+    OLAS.map((o) => `<tr><td class="mono">${esc(o[0])}</td><td>${esc(o[1])}</td><td>${esc(o[2])}</td><td>${tag(o[3])}</td><td style="white-space:normal;min-width:340px">${cod(o[4])}</td></tr>`).join("") + `</tbody>`;
+  const INV = [
+    ["`workspace.api-repository.ts` de 1.367 líneas", "web", "ok", "Hoy 18 líneas; el resto en 15 archivos de menos de 280"],
+    ["`mapRecordStatus` / `mapRecordRole`, `view-constants.ts`, `App.tsx`, `templates/index.ts`", "web", "ok", "Ya no existen"],
+    ["Estado en atención por el texto `atendid`", "web + api", "ok", "Sale de `EstadoRegistro.Codigo` (api-core #PR)"],
+    ["`transferTargets: []` y `wait: \"\"` fijos", "web", "ok", "Controles escondidos hasta que exista el dato"],
+    ["Proyección de `Mensaje` repetida en 6 handlers", "api", "ok", "`MensajeMapper.AVistaModelo`"],
+    ["Validación y armado de crear/actualizar una entidad y su actividad", "api", "ok", "`CierreRegistro.cs` y `ValidacionRegistro.cs` compartidos"],
+    ["`moveTabFocus` duplicado y `shell.helpers.ts`", "web", "ok", "Una sola en `tab-focus.ts`; helpers en `initials.ts` y `normalize-text.ts`"],
+    ["`InlineHint` / `InlineEmpty` con dos nombres", "web", "parcial", "`InlineEmpty` ya no existe; `InlineHint` se mueve con #PR"],
+    ["Funciones con complejidad > 15", "web", "parcial", "13 hoy contra 14 en la línea base; las mayores: `RecordFields` 39, `mapExternalRecordToRecord` 28, `TemplateForm` 28, `usePromoverMensajeForm` 26"],
+    ["Imports a las tripas de otro feature", "web", "parcial", "Los 19 hacia `catalogs` y `records` están resueltos; quedan ~31 hacia otros"],
+    ["Archivos de más de 400 líneas", "web + api", "parcial", "web: 7 → 2 (`useMensajeStore` 512, `MensajesPage` 403); api: `ProcessOutboxMessagesJob` 536"],
+    ["Job de Outbox de 536 líneas", "api", "decision", "No se parte: rompe la simetría con api-delivery y su concurrencia ya está auditada"],
+    ["`TipoEntidadIds` con 3 GUID fijos", "api", "decision", "Se quedan: el catálogo externo no tiene columna de código"],
+    ["Cliente HTTP repetido en `ApiContractsService` y `ApiPeopleService`", "api", "decision", "No se extrae con 2 copias; se extrae al tercer duplicado real"],
+    ["Copias entre repositorios de mensajes y plantillas; `EntityPanel`/`DetailPanel`", "web", "nover", "No se revisó si siguen"],
+  ];
+  $("inventario").innerHTML = `<thead><tr><th>Hallazgo</th><th>Repo</th><th>Estado hoy</th><th>Evidencia</th></tr></thead><tbody>` +
+    INV.map((r) => `<tr><td style="white-space:normal;min-width:280px">${cod(r[0])}</td><td>${esc(r[1])}</td><td>${tag(r[2])}</td><td style="white-space:normal;min-width:260px">${cod(r[3])}</td></tr>`).join("") + `</tbody>`;
+
+  const PRAC = [
+    ["Protección del repo", "`develop` y `main` sin protección de rama (ambos repos)", "grave", "falta", "`gh api .../branches/develop/protection` sigue dando 404. Puede ser falta de permiso de admin del token"],
+    ["Protección del repo", "Sin CODEOWNERS", "medio", "ok", "`.github/CODEOWNERS` existe en los dos repos, con Revisor Principal como revisor por defecto (api-core #PR)"],
+    ["Protección del repo", "Sin Dependabot", "medio", "decision", "Se probó (PR de NuGet, npm y GitHub Actions) y se retiró: no se usa por ahora"],
+    ["Protección del repo", "Escaneo de secretos sin confirmar", "menor", "nover", "El token no ve `security_and_analysis`; solo se probó api-core"],
+    ["CI/CD", "El CI de web-app no corre al subir commits a un PR", "grave", "falta", "`ci.yml:6` sigue con `types: [opened]`, sin `synchronize`"],
+    ["CI/CD", "Ninguna API aplica migraciones al desplegar", "grave", "decision", "Las migraciones se aplican a mano en las 5 APIs y así funciona (verificado 2026-09-26). Hay aviso: `MigracionesPendientesHealthCheck` detecta pendientes y desconocidas (api-core #PR)"],
+    ["CI/CD", "Permisos del token no son mínimos", "medio", "parcial", "web-app `ci.yml` ya declara `contents: read`; `cd-prod.yml` sigue con `contents: write` y `ci.yml` de api-core sin bloque `permissions`"],
+    ["Revisión de código", "PRs de más de 400 líneas", "grave", "falta", "De los últimos 10 mergeados: api-core 2 (#PR +3.162, #PR +1.313), web-app 6 (#PR +6.561, #PR +5.883, #PR +3.308…)"],
+    ["Revisión de código", "Tres PRs mergeados sin revisión (web-app #PR, #PR, #PR)", "medio", "hist", "Confirmado, pero es histórico: los PRs recientes sí pasan por revisión"],
+    ["Tests", "Huecos en web-app: tiempo real, conversión a registro, cancelación", "medio", "parcial", "Conversión a registro y cancelación tienen test; el tiempo real (`mensajesHubConnection.ts`) queda cubierto con 39 pruebas en web-app #PR (abierto, en revisión de Revisor Principal)"],
+    ["Legibilidad", "7 archivos de web-app sobre 400 líneas", "grave", "parcial", "Quedan 2: `useMensajeStore.ts` 512 y `MensajesPage.tsx` 403"],
+    ["Legibilidad", "GUID de `TipoServicio` escritos a mano en el frontend", "medio", "ok", "Ya no hay GUID literales; `TipoServicioCodigos` usa códigos de texto (web-app #PR)"],
+    ["Legibilidad", "`ProcessOutboxMessagesJob.cs` de 533 líneas", "menor", "decision", "Hoy 536; se deja como está por decisión"],
+    ["Observabilidad", "Sin logs útiles cuando algo falla en dev", "medio", "decision", "Se usa Application Insights de Azure, no Serilog (decisión 2026-09-26); la tarjeta <card-id> ya no aplica como está escrita"],
+    ["Observabilidad", "El health check no detecta migraciones desfasadas", "medio", "ok", "`MigracionesPendientesHealthCheck` (api-core #PR, commits de ejemplo)"],
+  ];
+  $("practicas").innerHTML = `<thead><tr><th>Eje</th><th>Hallazgo del 21/09</th><th>Gravedad</th><th>Estado hoy</th><th>Evidencia</th></tr></thead><tbody>` +
+    PRAC.map((r) => `<tr><td>${esc(r[0])}</td><td style="white-space:normal;min-width:240px">${cod(r[1])}</td><td>${r[2]}</td><td>${tag(r[3])}</td><td style="white-space:normal;min-width:300px">${cod(r[4])}</td></tr>`).join("") + `</tbody>`;
+
+  // ---------------------------------------------------------------- referencia enterprise
+  const ENT = [
+    ["Licencias", "MediatR desde la 13 y AutoMapper desde la 15 son comerciales en producción (gratis con ingresos menores a US$5M); FluentAssertions 8 también. Alternativas libres: Mediator (source generator), Mapperly, AwesomeAssertions o Shouldly.", "api-core usa MediatR 14.2.0, dentro del rango comercial (13 en adelante); falta confirmar si el plan gratuito por ingresos nos cubre y si pide clave de licencia."],
+    ["Migraciones", "Microsoft recomienda un migration bundle o un script idempotente como paso único del CD, con identidad distinta a la de runtime, y `has-pending-model-changes` en el CI.", "Ninguna API aplica migraciones al desplegar: es el hallazgo C2 de arriba."],
+    ["Resiliencia HTTP", "`AddStandardResilienceHandler` (Polly v8) trae reintentos, circuit breaker y timeouts, pero reintenta también POST y DELETE; hay que usar `DisableForUnsafeHttpMethods()`.", "api-core registra sus `HttpClient` con `AddHttpClient()` a secas, sin handler de resiliencia: sin reintentos ni circuit breaker hacia People, Contracts y Delivery."],
+    ["Outbox", "Es el patrón correcto, pero da entrega al menos una vez: el consumidor debe ser idempotente.", "api-delivery no tiene llave de idempotencia (memoria del proyecto)."],
+    ["Seguridad", "OWASP API Top 10 2023: API1 y API5 son autorización por objeto y por función. NuGet Audit ya revisa dependencias transitivas en `net10.0`; Central Package Management permite parchear en un solo lugar.", "En api-contracts el chequeo de permisos granular no está conectado y todo rol pasa: es API5."],
+    ["Observabilidad", "OpenTelemetry con `ServiceDefaults` de Aspire se usa sin el resto de Aspire; correlacionar trazas entre servicios es lo que más acelera un diagnóstico.", "Cinco APIs que se llaman entre sí y sin logs útiles en dev (hallazgo O1)."],
+    ["EF Core 10", "Named query filters, complex types (preferidos sobre owned para JSON), tipo `json` nativo y vectores en Azure SQL. Ojo: la primera migración convierte columnas `nvarchar` con JSON a `json`.", "Leer las notas de migración antes de subir de versión el paquete de EF."],
+    ["ASP.NET Core 10", "`AddValidation()` en minimal APIs, OpenAPI 3.1 por defecto, HybridCache, rate limiting (por instancia). Los `IExceptionHandler` ya no registran log por defecto.", "Verificar el manejo de excepciones al subir de versión."],
+    ["Arquitectura", "Microsoft sigue recomendando Clean para monolitos no triviales y monolito antes que microservicios; BFF y Vertical Slice son válidos, y para un agregador encajan slices por endpoint.", "Ya son 5 servicios: la pregunta útil es si las fronteras reflejan equipos y despliegues reales."],
+    ["Testing", "Testcontainers.MsSql con WebApplicationFactory y Respawn es el estándar de tests de integración; Stryker.NET (mutación) en CI nocturno.", "api-core ya usa Testcontainers.MsSql 4.14 y Shouldly (no FluentAssertions, que es comercial desde la 8)."],
+  ];
+  $("enterprise").innerHTML = `<thead><tr><th>Tema</th><th>Qué dice la práctica actual</th><th>Para nosotros</th></tr></thead><tbody>` +
+    ENT.map((r) => `<tr><td><b>${esc(r[0])}</b></td><td style="white-space:normal;min-width:320px">${cod(r[1])}</td><td style="white-space:normal;min-width:260px">${cod(r[2])}</td></tr>`).join("") + `</tbody>`;
+
+})();
+</script>

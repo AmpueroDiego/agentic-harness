@@ -1,6 +1,8 @@
 ---
 name: shunt
 description: "Lecturas grandes y generación mecánica de archivos delegadas a un motor barato (agy/Gemini flash) en vez de gastar el contexto de Claude — inspirado en 'Portal by Spotify'."
+tipo: skill
+tags: [harness]
 ---
 <!-- generado por .claude/scripts/generar-skills-codex.py; no editar a mano -->
 

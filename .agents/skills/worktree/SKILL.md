@@ -1,6 +1,8 @@
 ---
 name: worktree
 description: "Crea, lista, sincroniza con develop y cierra worktrees de los repos hijos (api-core, web-app…) para trabajar varias tarjetas en paralelo, una sesión por worktree."
+tipo: skill
+tags: [harness]
 ---
 <!-- generado por .claude/scripts/generar-skills-codex.py; no editar a mano -->
 

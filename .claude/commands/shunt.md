@@ -18,6 +18,53 @@ Réplica local del flujo que describe [Portal by Spotify](https://engineering.at
 
 Ambos escriben a stderr el comando exacto a usar y salen con código 2 (bloqueado). `SHUNT_DISABLE=1` los apaga por completo; `SHUNT_MIN_LINES=<n>` cambia el umbral.
 
+### `compactar-salida-build.py` — el hueco de la salida en vivo
+
+> [!WARNING]
+> **Escrito y probado, todavía NO instalado.** El paso de copiarlo a `~/.claude/hooks/` y registrarlo en `~/.claude/settings.json` está bloqueado para Claude (guardarraíl de automodificación); lo tiene que hacer el responsable a mano. Hasta entonces esta sección describe algo que no está corriendo.
+
+Los dos hooks de arriba solo interceptan `Read` y `cat`: **la salida en vivo de un subproceso nunca pasa por ahí**. Cada coder corre `dotnet build` y QA lo corre otra vez, así que esa salida entra al contexto dos o tres veces por cambio.
+
+`dotnet test` con la verbosidad por defecto no imprime una línea por test que pasa: el gasto viene de las advertencias del compilador, que sí se repiten.
+
+A diferencia de los otros dos, este **no bloquea**: es un `PostToolUse` sobre `Bash` que reemplaza la salida con `updatedOutput`.
+
+**Medido sobre un `dotnet build` real y limpio de `api-core` (2026-09-22): 254 líneas / ~29.2K tokens → 27 líneas / ~1.5K tokens, 95% menos.** Y lo que la medición dejó ver es más importante que el hook: **207 de esas 254 líneas eran la misma advertencia `xUnit1051`**, repetida una vez por cada sitio con su párrafo de explicación y su URL completos. El build verde de api-core cuesta ~29K tokens y el 88% es una sola advertencia. Arreglarla o silenciarla en el `.csproj` de los proyectos de test da el mismo ahorro en la fuente, sin depender del hook.
+
+| | |
+|---|---|
+| Dispara en | `dotnet build\|test\|restore`, `npm test`, `npm run build`, `yarn test`, `vitest`/`npx vitest` |
+| **No** dispara en | `dotnet run`, `npm run dev` — ahí la salida en vivo es el punto |
+| Conserva siempre | errores, warnings, `Build succeeded`/`FAILED`, tests fallidos, `Assert`/`Expected`/`Actual`, stack traces (hasta 12 marcos por bloque), el resumen final |
+| Descarta | restore de NuGet, `-> ruta.dll`, tests individuales en verde, `✓` de vitest |
+| Deduplica | una advertencia de analizador repetida deja **una copia entera** + la lista de dónde más salta. Es lo que hace el grueso del ahorro |
+| No toca nada si | la salida tiene menos de `SHUNT_BUILD_MIN_LINES` líneas, o el comando no matchea |
+
+Ante cualquier error propio sale en silencio y la salida original pasa intacta: un hook que falla nunca debe romper el comando ni, peor, esconder su resultado.
+
+Tests: `python .claude/hooks/test_compactar_salida_build.py` — 31 comprobaciones, casi todas sobre lo mismo desde distintos ángulos: que un fallo sobreviva a la compresión. El payload del test va en UTF-8 a propósito, porque el modo de fallo más probable en Windows es que `json.load(sys.stdin)` se atragante con un `✓` de vitest, el hook falle-abierto y nadie se entere.
+
+**Instalación (manual, pendiente):**
+
+```bash
+cp .claude/hooks/compactar-salida-build.py ~/.claude/hooks/
+```
+
+y en `~/.claude/settings.json`, dentro de `"hooks"`:
+
+```json
+"PostToolUse": [
+  {
+    "matcher": "Bash",
+    "hooks": [
+      { "type": "command", "command": "python -c \"from pathlib import Path; import runpy; runpy.run_path(str(Path.home() / '.claude/hooks/compactar-salida-build.py'), run_name='__main__')\"", "timeout": 15 }
+    ]
+  }
+]
+```
+
+**Verificación después de instalar:** correr un `dotnet test` largo. La salida tiene que empezar con `[salida comprimida por compactar-salida-build.py: N de M líneas...]`. Si no aparece, la forma de `tool_result` no es ninguna de las tres que el hook tolera — correr con `SHUNT_BUILD_DEBUG=1`, que anota el tipo y las claves reales en `%TEMP%\shunt-build-forma.txt`.
+
 ## Las dos piezas que se invocan (scripts)
 
 Viven en `~/.claude/scripts/` (copia real) y `.claude/scripts/` de este repo (copia versionada — mantenerlas idénticas, mismo criterio que `git-guard.sh`).
@@ -40,33 +87,34 @@ Mismo truco: `agy` lee la referencia con `--add-dir`, no por argv. Corre en modo
 
 **No reemplaza QA/adversary.** Es un motor más dentro del reparto de coders de `/orquestar` (Step 3, tabla de motores) para el caso angosto "archivo nuevo calcado de uno existente" — el resultado sigue el mismo Step 4+ que cualquier otro coder.
 
-**Reuso sin script nuevo, para diagramas y ADRs** *(agregado 2026-09-18)*: `code-write.sh` también sirve para dos casos que no son código C#/TS:
+**Reuso sin script nuevo, para diagramas y ADRs**: `code-write.sh` también sirve para dos casos que no son código C#/TS:
 - **Diagramas**: `--reference <existente>.diagrama.json --target <nuevo>.diagrama.json --spec "<participantes/nodos/pasos/conexiones>"`. El `--spec` trae las decisiones de contenido reales — `agy` codifica el JSON, no decide qué muestra el diagrama. El pipeline determinista (`generar.py` → `validar.py` → `previsualizar.py` → mirar, ver [`/diagramar`](diagramar.md)) sigue obligatorio sin cambios; ahí está la verificación real, no en este script.
-- **ADRs**: `--reference docs/adr/00XX-mas-parecido.md --target docs/adr/000N-slug.md --spec "<resumen de la decisión ya acordada con el responsable del repo>"`, solo después de que el responsable del repo confirme explícitamente que corresponde un ADR (gate del Step 5 de `/orquestar`, sin cambios). A diferencia del uso normal ("Claude nunca lo ve"), acá Claude **sí lee** el archivo generado antes de mostrárselo al responsable del repo — no hay QA/adversary/validador después de un ADR.
+- **ADRs**: `--reference docs/adr/00XX-mas-parecido.md --target docs/adr/000N-slug.md --spec "<resumen de la decisión ya acordada con el responsable>"`, solo después de que el responsable confirme explícitamente que corresponde un ADR (gate del Step 5 de `/orquestar`, sin cambios). A diferencia del uso normal ("Claude nunca lo ve"), acá Claude **sí lee** el archivo generado antes de mostrárselo al responsable — no hay QA/adversary/validador después de un ADR.
 
-### `gh-read-shunt.sh` — leer salidas grandes de GitHub sin que entren crudas al contexto
+### `trello-read-shunt.sh` / `gh-read-shunt.sh` — leer salidas grandes de Trello/GitHub sin que entren crudas al contexto
 
-*(agregado 2026-09-18)* Mismo patrón que `bulk-read.sh`, pero para la salida de un comando en vez de un archivo — y de hecho **la componen**, no reimplementan la llamada a `agy`: corren el comando real (subproceso de este script, nunca de `agy`, que no puede ejecutar `gh` por su cuenta), capturan la salida a un directorio temporal aislado (`mktemp -d`, no un archivo suelto en `/tmp` compartido) y se la pasan a `bulk-read.sh --paths`.
+Mismo patrón que `bulk-read.sh`, pero para la salida de un comando en vez de un archivo — y de hecho **la componen**, no reimplementan la llamada a `agy`: corren el comando real (subproceso de este script, nunca de `agy`, que no puede ejecutar `trello.py` ni `gh` por su cuenta), capturan la salida a un directorio temporal aislado (`mktemp -d`, no un archivo suelto en `/tmp` compartido) y se la pasan a `bulk-read.sh --paths`.
 
 ```bash
+bash ~/.claude/scripts/trello-read-shunt.sh --question "¿Qué tarjetas de 'En curso' tocan api-core?" -- buscar api-core
 bash ~/.claude/scripts/gh-read-shunt.sh --question "¿Qué pidió cambiar el revisor?" -- pr view 42 --json comments,reviews
 ```
 
-**Solo lectura, por diseño, y el script se autorrechaza si no lo es**: `gh-read-shunt.sh` acepta únicamente `pr view|pr diff|pr checks|pr status` y `api` sin `-X`/`--method`. Cualquier otro subcomando sale con error antes de ejecutar nada — ver "Qué NO se shuntea" abajo.
+**Solo lectura, por diseño, y el script se autorrechaza si no lo es**: `trello-read-shunt.sh` acepta únicamente `tablero|buscar|listar|ver`; `gh-read-shunt.sh` acepta únicamente `pr view|pr diff|pr checks|pr status` y `api` sin `-X`/`--method`. Cualquier otro subcomando sale con error antes de ejecutar nada — ver "Qué NO se shuntea" abajo.
 
 ## Qué NO se shuntea, y por qué
 
-- **Mutaciones del tablero de tareas** (crear/actualizar/adjuntar/comentar): la herramienta del tablero ya imprime una salida corta por diseño — la propuesta en modo simulación, la verificación en modo `--aplicar` — no el JSON crudo de la API. Pasarla por `agy` sumaría un viaje de ~60-90s sin ahorrar nada. Siguen corriendo directo. *(La herramienta del tablero y su shunt de lectura se retiraron de la versión pública; el patrón es el mismo que `gh-read-shunt.sh`.)*
+- **Mutaciones de Trello** (`crear`/`actualizar`/`adjuntar`/`comentar`/`ordenar`): `trello.py` ya imprime una salida corta por diseño — la propuesta en modo simulación, la verificación en modo `--aplicar` — no el JSON crudo de la API. Pasarla por `agy` sumaría un viaje de ~60-90s sin ahorrar nada. Siguen corriendo directo, documentado en [`/trello`](trello.md).
 - **El cuerpo de un PR**: por `orquestar.md` Step 4.7, ese texto sale del run doc de la corrida (ya corto, ya en el contexto de Claude), no del diff — no hay lectura grande que evitar ahí. Forzar una delegación leyendo el diff completo sería más caro que lo que Claude ya hace.
-- **`gh pr create`/`merge`/`close`/`edit`**: nunca se delegan. Es la única escritura de este grupo sin el gate mecánico `--aplicar` que tiene el tablero, y `git-guard.sh` (el hook que exige `--base develop`) solo ve las llamadas Bash de Claude — si `agy` corriera `gh pr create` desde su propio shell, esa protección no dispara. El rechazo vive adentro de `gh-read-shunt.sh`, no en el hook.
+- **`gh pr create`/`merge`/`close`/`edit`**: nunca se delegan. Es la única escritura de este grupo sin el gate mecánico `--aplicar` que tiene Trello, y `git-guard.sh` (el hook que exige `--base develop`) solo ve las llamadas Bash de Claude — si `agy` corriera `gh pr create` desde su propio shell, esa protección no dispara. El rechazo vive adentro de `gh-read-shunt.sh`, no en el hook.
 
 ## Historial de uso
 
-*(mismo criterio que `antigravity.md`: se anota cada uso real para decidir con datos, no con impresiones. Vacío hasta el primer uso real.)*
+*(mismo criterio que `antigravity.md`: se anota cada uso real para decidir con datos, no con impresiones.)*
 
 | Fecha | Script | Tarea | Tamaño evitado | Tokens gastados | Veredicto |
 |---|---|---|---|---|---|
-| 2026-09-18 | `code-write.sh` | Relocalizar un mock-repository de 955 líneas como fixture de test (REQ-0008) | 0 (no llegó a generar nada) | ~0 | **FALLÓ** — `agy --mode plan --add-dir` intentó una herramienta que pide permiso `command(...)`, que el modo headless no puede aprobar y auto-rechaza. Sale `jetski: no output produced`, exit 1, sin escribir el target. No es un límite de tamaño ni de spec — es el primer uso real del script y pegó con un permiso no resuelto. Fallback: la tarea se mandó a Codex (`codex exec --sandbox workspace-write`), que sí puede escribir sin ese gate. Pendiente: alguien con sesión interactiva de `agy` corra `--dangerously-skip-permissions` una vez para ver si el permiso queda memorizado, o revisar qué comando interno dispara el gate antes de reintentar en headless. |
+| 2026-09-18 | `code-write.sh` | Relocalizar un repositorio de pruebas (955L) como fixture de test (REQ de ejemplo) | 0 (no llegó a generar nada) | ~0 | **FALLÓ** — `agy --mode plan --add-dir` intentó una herramienta que pide permiso `command(...)`, que el modo headless no puede aprobar y auto-rechaza. Sale `jetski: no output produced`, exit 1, sin escribir el target. No es un límite de tamaño ni de spec — es el primer uso real del script y pegó con un permiso no resuelto. Fallback: la tarea se mandó a Codex (`codex exec --sandbox workspace-write`), que sí puede escribir sin ese gate. Pendiente: alguien con sesión interactiva de `agy` corra `--dangerously-skip-permissions` una vez para ver si el permiso queda memorizado, o revisar qué comando interno dispara el gate antes de reintentar en headless. |
 
 **Criterio de abandono**: si tras ~5 usos de un script el ahorro medido no es claro, dejar de usarlo para esa categoría en vez de defender la herramienta.
 

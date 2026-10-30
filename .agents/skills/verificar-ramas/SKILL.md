@@ -1,6 +1,8 @@
 ---
 name: verificar-ramas
 description: "Audita y corrige la topología de ramas de un repo (main/develop/qa), detectando y arreglando divergencias causadas por PRs mergeadas al target equivocado."
+tipo: skill
+tags: [harness]
 ---
 <!-- generado por .claude/scripts/generar-skills-codex.py; no editar a mano -->
 

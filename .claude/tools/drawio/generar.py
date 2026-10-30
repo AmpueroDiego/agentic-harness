@@ -53,7 +53,7 @@ SEP_CARRIL = 14.0
 ANCHO_ETIQUETA = 230.0             # las etiquetas se envuelven a este ancho
 
 # Paleta sobria: la caja es blanca y el color vive en una barra de 4px arriba.
-# El color informa la categoria, no decora el relleno. Cuatro acentos, no siete.
+# El color informa la categoria, no decora el fondo. Cuatro acentos, no siete.
 ACENTOS = {
     "principal": "#1F4E79",   # azul profundo — lo central del diagrama
     "apoyo":     "#4E8098",   # azul apagado  — lo que rodea
@@ -64,7 +64,7 @@ ACENTOS = {
     "curso":     "#C77700",   # ambar
     "pendiente": "#7A8794",   # gris
 }
-# Relleno de caja para el modo "cajas_rellenas": un tinte claro del acento.
+# Fondo de caja para el modo "cajas_rellenas": un tinte claro del acento.
 TINTES = {
     "principal": "#DCE7F3", "apoyo": "#DDEAF0", "acento": "#F6E3D3",
     "neutro": "#E9EDF1", "hecho": "#D4EDD6", "curso": "#FCE8C8",
@@ -81,7 +81,7 @@ TINTA = "#1F2933"        # texto principal
 TINTA_SUAVE = "#6B7A8C"  # texto secundario y etiquetas de flecha
 BORDE = "#D3D8DE"        # borde de las cajas
 PAPEL = "#FFFFFF"
-BANDA = "#F6F8F9"        # relleno de los grupos
+BANDA = "#F6F8F9"        # fondo de los grupos
 LINEA = "#A8B3BF"        # flechas
 ALTO_BARRA = 4.0
 ALTO_TITULO = 26.0
@@ -727,7 +727,7 @@ def construir_pagina(pagina, indice):
     ET.SubElement(root, "mxCell", {"id": "1", "parent": "0"})
 
     # 1) bandas de grupo primero, para que queden atras. Sin linea punteada:
-    #    un relleno muy claro agrupa igual y no compite con las cajas.
+    #    un fondo muy claro agrupa igual y no compite con las cajas.
     #    Con "contenedor": true (en el grupo, o "grupos_contenedores": true en
     #    la pagina) la banda es un contenedor real de draw.io: colapsable, y
     #    sus nodos van como hijos con coordenadas relativas, asi que al mover
@@ -743,15 +743,15 @@ def construir_pagina(pagina, indice):
         if g.get("padre") in contenedores:
             padre = f"g-{g['padre']}"
             px, py = contenedores[g["padre"]]
-        # un carril se distingue de su padre por un relleno apenas mas claro;
-        # "relleno" (hex) en el grupo pisa el color, y "titulo_color" el del rotulo
-        relleno = g.get("relleno", PAPEL if g.get("padre") else BANDA)
+        # un carril se distingue de su padre por un fondo apenas mas claro;
+        # "fondo" (hex) en el grupo pisa el color, y "titulo_color" el del rotulo
+        fondo = g.get("fondo", PAPEL if g.get("padre") else BANDA)
         color_titulo = g.get("titulo_color", TINTA_SUAVE)
         tam_titulo = 12 if not g.get("padre") and pagina.get("cajas_rellenas") else 10
         celda(root, f"g-{g['id']}",
               f'<span style="letter-spacing:1px">'
               f'{esc(g.get("titulo", "").upper())}</span>',
-              f"rounded=0;whiteSpace=wrap;html=1;fillColor={relleno};"
+              f"rounded=0;whiteSpace=wrap;html=1;fillColor={fondo};"
               f"strokeColor=none;verticalAlign=top;align=left;spacingLeft=12;"
               f"spacingTop=4;fontSize={tam_titulo};fontStyle=1;fontColor={color_titulo};"
               + extra,
@@ -802,7 +802,7 @@ def construir_pagina(pagina, indice):
 def _notas_prohibidas(pagina):
     """Los paneles de texto al costado no van. Nunca.
 
-    Regla del responsable del repo (2026-09-09): un diagrama muestra, no explica. Un bloque de
+    Regla del responsable (2026-09-09): un diagrama muestra, no explica. Un bloque de
     prosa flotando al lado de las cajas no es parte del dibujo — es una nota al
     pie que se coló adentro, y es lo primero que hace ver cargada una lamina.
     Si el contexto hace falta, va en el .diagrama.json bajo una clave que

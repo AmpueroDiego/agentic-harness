@@ -1,6 +1,8 @@
 ---
 name: diagramar
 description: "Genera diagramas .drawio a partir de una especificación JSON, con layout calculado y validación anti-solapamientos. También audita los .drawio existentes."
+tipo: skill
+tags: [harness]
 ---
 <!-- generado por .claude/scripts/generar-skills-codex.py; no editar a mano -->
 

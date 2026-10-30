@@ -64,6 +64,22 @@ SORT fecha ASC
 
 > Las consultas Dataview de arriba apuntan a `docs/runs/` y `docs/adr/`, que en esta versión pública están vacías (contenían corridas y decisiones del cliente). Se dejan como documentación del mecanismo: cada corrida y cada ADR es una nota con frontmatter que el tablero indexa solo.
 
+## Guías y mantenimiento
+
+- [[tasks|Registro de tareas]]
+- [[docs/guias/PENDIENTES-CONSOLA-AGENTE-2026-09-11|Ejemplo de traspaso de pendientes]]
+- [[docs/guias/PREPARACION-DEFENSA-CODE-REVIEW|Preparación de una revisión de código]]
+- [[docs/guias/PRINCIPIOS-INGENIERIA-MINIMALISTA|Principios de ingeniería minimalista]]
+- [[.claude/commands/cola|Cola de PRs]]
+
+## Mantenimiento y guías
+
+- [[tasks|Registro de tareas]]
+- [[docs/guias/GUIA-CONSOLA-AGENTE-PENDIENTES-Y-CASOS|Guía genérica de consola y ciclo de trabajo]]
+- [[docs/guias/DETECCION-CODE-SMELLS|Detección de code smells]]
+- [[.claude/commands/practicas|Auditoría de prácticas]]
+- [[.claude/commands/negocio|Contrapeso de dominio]]
+
 ## Todo lo demás en este vault, por tag
 
 ```dataview
@@ -72,3 +88,31 @@ FROM ""
 WHERE tipo != "dashboard"
 SORT fecha DESC
 ```
+
+## Mantenimiento del harness
+
+- [[TASKS|Registro de tareas]]
+- [[.claude/skills/antislop-copywriting/SKILL|antislop-copywriting]]
+- [[.claude/commands/diagramar|diagramar]]
+- [[docs/guias/OBSERVACIONES-2026-09-03-INCIDENTES-Y-AUDITORIA|OBSERVACIONES-2026-09-03-INCIDENTES-Y-AUDITORIA]]
+- [[.claude/agents/planner|planner]]
+- [[docs/guias/CHECKLIST-DESPLIEGUE-OUTBOX-API-CORE|CHECKLIST-DESPLIEGUE-OUTBOX-API-CORE]]
+- [[.claude/agents/ux-ui|ux-ui]]
+- [[.claude/commands/proyecto|proyecto]]
+- [[.claude/commands/levantar-proyecto|levantar-proyecto]]
+- [[docs/guias/CI-CD-GITHUB-API-CORE-Y-WEB-APP|CI-CD-GITHUB-API-CORE-Y-WEB-APP]]
+- [[.claude/commands/listo-para-merge|listo-para-merge]]
+- [[.claude/commands/priorizar|priorizar]]
+- [[.claude/agents/analyst|analyst]]
+
+## Guías y herramientas sincronizadas
+
+- [[docs/guias/PLAYBOOK-ANTI-REGRESIONES-Y-LECCIONES-APRENDIDAS|Playbook anti-regresiones]]
+- [[docs/guias/AUDITORIA-VAULT-VS-CODIGO-2026-09-11|Auditoría del vault frente al código]]
+- [[docs/guias/ESTANDAR-ENTREGA-TRELLO-Y-GITHUB|Estándar de entrega]]
+- [[docs/guias/PROMPT-TABLERO-AVANCE-REUTILIZABLE|Prompt reutilizable del tablero de avance]]
+- [[docs/guias/RETRO-VISTA-CLIENTE-CONSOLA|Retrospectiva de una consola de trabajo]]
+- [[.claude/commands/supercodex|Revisión continua con Codex]]
+- [[.claude/commands/trello|Conector del tablero]]
+- [[.claude/skills/antislop-code/SKILL|Revisión de mantenibilidad]]
+- [[.claude/tools/supercodex/bitacora-mejoras-codex|Bitácora de mejoras de revisión]]

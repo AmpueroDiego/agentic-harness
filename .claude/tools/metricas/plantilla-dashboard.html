@@ -1,0 +1,144 @@
+<title>Tablero de Agentes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Tablero de lectura rápida: resumen arriba, seis bloques debajo, una tarjeta por pregunta */
+:root{
+  --bg:#f3f5f6; --panel:#ffffff; --fg:#17232b; --mute:#5a6b75; --line:#dbe2e6;
+  --accent:#0f7a78; --accent-soft:#d8eeed; --sec:#b7791f; --warn:#b4231f; --warn-soft:#fbe4e2;
+  --font:"Public Sans",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f181d; --panel:#16232a; --fg:#e5edf0; --mute:#93a6af; --line:#263740;
+  --accent:#4fc4c0; --accent-soft:#12383a; --sec:#e0a84a; --warn:#ff8a84; --warn-soft:#3b1a19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f181d; --panel:#16232a; --fg:#e5edf0; --mute:#93a6af; --line:#263740;
+  --accent:#4fc4c0; --accent-soft:#12383a; --sec:#e0a84a; --warn:#ff8a84; --warn-soft:#3b1a19; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);padding-inline:16px;padding-block:24px}
+main{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-size:1.5rem;margin:0;text-wrap:balance}
+h2{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:0 0 12px;font-weight:700}
+header p{margin:4px 0 0;color:var(--mute);font-size:.85rem}
+.resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.k{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-width:0}
+.k span{display:block;font-size:.72rem;color:var(--mute)}
+.k b{display:block;font-family:var(--mono);font-size:1.45rem;font-variant-numeric:tabular-nums;margin-top:2px}
+.k small{display:block;color:var(--mute);font-size:.72rem;margin-top:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:16px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;min-width:0}
+section p.nota{color:var(--mute);font-size:.8rem;margin:12px 0 0;max-width:65ch}
+.fila{display:grid;grid-template-columns:minmax(80px,38%) 1fr auto;gap:10px;align-items:center;font-size:.8rem;margin-block:6px}
+.et{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar{background:var(--accent-soft);height:10px;border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.bar i.sec{background:var(--sec)}
+.fila b{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;font-size:.78rem}
+svg{width:100%;height:auto;display:block}
+svg .g{stroke:var(--line);stroke-width:1}
+svg .t{fill:var(--mute);font-size:10px;font-family:var(--mono)}
+svg .a{fill:var(--accent-soft)} svg .l{fill:none;stroke:var(--accent);stroke-width:2}
+svg .p{fill:var(--accent);stroke:var(--panel);stroke-width:2}
+.tabla{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.8rem}
+th{text-align:left;color:var(--mute);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:6px 8px;border-bottom:1px solid var(--line)}
+td.num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{font-size:.72rem;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.vacio{color:var(--mute);font-size:.82rem}
+.filtros{display:flex;flex-wrap:wrap;gap:12px 28px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lbl{font-size:.72rem;color:var(--mute);margin-right:4px}
+.sel{font:inherit;font-size:.8rem;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg)}
+.chip{font:inherit;font-size:.8rem;padding:4px 12px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+footer{color:var(--mute);font-size:.75rem}
+</style>
+<main>
+  <header>
+    <h1>Tablero de Agentes</h1>
+    <p>Qué sale de las corridas con agentes y cuánto cuesta llegar ahí. Actualizado {{GENERADO}}.</p>
+  </header>
+
+  <nav class="filtros" aria-label="Filtros">
+    <div class="chips" role="group" aria-label="Período">
+      <label class="lbl" for="semana">Semana</label>
+      <select id="semana" class="sel">{{OPCIONES}}</select>
+    </div>
+    <div class="chips" role="group" aria-label="Repo de la cola de PRs">
+      <span class="lbl">Repo (cola de PRs)</span>
+      <button type="button" class="chip on" data-repo="todos">Todos</button>
+      <button type="button" class="chip" data-repo="api-core">api-core</button>
+      <button type="button" class="chip" data-repo="web-app">web-app</button>
+    </div>
+  </nav>
+<!--VISTA-->
+  <div class="resumen">
+    <div class="k"><span>Corridas registradas</span><b>{{N_CORRIDAS}}</b><small>libro mayor del INDEX</small></div>
+    <div class="k"><span>Primera pasada limpia</span><b>{{PRIMERA}}</b><small>QA en PASS al primer ciclo</small></div>
+    <div class="k"><span>Tokens por corrida</span><b>{{TOK_MED}}</b><small>mediana</small></div>
+    <div class="k"><span>Duración por corrida</span><b>{{MIN_MED}}</b><small>mediana</small></div>
+    <div class="k"><span>Worktrees abiertos</span><b>{{N_WT}}</b><small>{{WT_REPO}}</small></div>
+    <div class="k"><span>PRs abiertos</span><b>{{PR_ABIERTOS}}</b><small>esperando revisión o merge</small></div>
+  </div>
+
+  <div class="grid">
+    <section>
+      <h2>1 · Costo por corrida</h2>
+      {{GRAF_TOK}}
+      <div style="margin-top:12px">{{BARRAS_MES}}</div>
+      <p class="nota">Arriba, tokens de cada corrida en el tiempo. Abajo, el promedio por mes. Los tokens solos no dicen si rindió: se leen junto a la primera pasada limpia y al retrabajo.</p>
+    </section>
+
+    <section>
+      <h2>2 · Carriles en paralelo</h2>
+      <div class="k" style="margin-bottom:10px"><span>Días con 2 o más corridas</span><b>{{DIAS_PAR}}</b></div>
+      <p class="nota">Worktrees abiertos ahora: {{WT_REPO}}. El INDEX no guarda cuántos coders corrieron dentro de una corrida; ese dato falta y conviene sumarlo al registro.</p>
+    </section>
+
+    <section>
+      <h2>3 · Ciclos de QA por corrida</h2>
+      {{BARRAS_CICLOS}}
+      <p class="nota">Una corrida que pasa QA al primer ciclo no tuvo retrabajo. Más ciclos son correcciones que el coder debió rehacer.</p>
+    </section>
+
+    <section>
+      <h2>4 · Retrabajo en revisión</h2>
+      <div class="tabla"><table>
+        <thead><tr><th>PR en /supercodex</th><th class="num">Rondas</th><th class="num">Limpias</th></tr></thead>
+        <tbody>{{FILAS_SC}}</tbody></table></div>
+      <p class="nota">Revisiones recibidas por PR mergeado: {{REV_PROM}} en promedio (últimos 40 por repo).</p>
+    </section>
+
+    <section style="grid-column:1/-1">
+      <h2>5 · Cola de revisión</h2>
+      <div class="tabla"><table>
+        <thead><tr><th>PR</th><th>Título</th><th class="num">Abierto hace</th><th>Estado</th></tr></thead>
+        <tbody>{{FILAS_PR}}</tbody></table></div>
+      <p class="nota">Del abrir al mergear, los últimos PR tardaron {{PR_H_MED}} de mediana. Más de 3 días abierto se marca en rojo.</p>
+    </section>
+
+    <section style="grid-column:1/-1">
+      <h2>6 · Real contra PERT</h2>
+      <div class="k" style="margin-bottom:10px"><span>Tarjetas cerradas</span><b>{{PERT_PCT}}</b><small>{{PERT_TOT}}</small></div>
+      {{BARRAS_PERT}}
+      <p class="nota">Cada barra es horas reales sobre horas estimadas de la tarjeta. Menos de 100 % es más rápido que la estimación. No incluye la revisión del PR ni los ajustes posteriores.</p>
+    </section>
+  </div>
+<!--/VISTA-->
+  <footer>Fuentes: docs/agent-runs/INDEX.md, TASKS.md, supercodex-rondas.md, git worktree y gh. Regenerar con python .claude/tools/metricas/dashboard-agentes.py.</footer>
+</main>
+<script>
+(function(){
+  var sel=document.getElementById('semana'), rep=document.querySelectorAll('[data-repo].chip');
+  function periodo(p){document.querySelectorAll('.vista').forEach(function(v){v.hidden=v.dataset.p!==p});
+    sel.value=p;try{localStorage.setItem('ta-p',p)}catch(e){}}
+  function repo(r){document.querySelectorAll('tr[data-repo]').forEach(function(t){t.hidden=r!=='todos'&&t.dataset.repo!==r});
+    rep.forEach(function(b){b.classList.toggle('on',b.dataset.repo===r)})}
+  sel.addEventListener('change',function(){periodo(sel.value)});
+  rep.forEach(function(b){b.addEventListener('click',function(){repo(b.dataset.repo)})});
+  var g='s0';try{g=localStorage.getItem('ta-p')||'s0'}catch(e){}
+  if(!/^(todo|s[0-7])$/.test(g))g='s0';periodo(g);
+})();
+</script>

@@ -8,7 +8,7 @@
 #
 # Uso: gh-read-shunt.sh --question "..." -- pr view 42 --json comments,reviews
 #      gh-read-shunt.sh --question "..." -- pr diff 42
-#      gh-read-shunt.sh --question "..." -- api repos/AcmeOrg/api-core/pulls/42/comments
+#      gh-read-shunt.sh --question "..." -- api repos/<org>/api-core/pulls/42/comments
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

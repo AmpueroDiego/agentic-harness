@@ -5,7 +5,7 @@
 # MCP (planner, analyst…), que van con Claude porque las bases solo están conectadas ahí.
 # El agente es de solo lectura si su `tools:` no tiene Edit ni Write: Codex corre con -s read-only y agy en modo plan.
 set -uo pipefail
-# Raíz del proyecto: PROYECTO_RAIZ (config/proyecto.env) o la raíz git de este script.
+# Raíz configurable o calculada desde el script.
 MAQ=${PROYECTO_RAIZ:-$(git -C "$(dirname "$0")" rev-parse --show-toplevel)}
 AGENTE=${1:?agente (nombre de .claude/agents/<agente>.md)}; PROMPT=${2:?prompt.md}; SALIDA=${3:?salida.md}; RAIZ=${4:-$MAQ}
 DEF=$MAQ/.claude/agents/$AGENTE.md
@@ -20,7 +20,7 @@ mkdir -p "$(dirname "$SALIDA")"
 
 # Codex y agy no conocen los agentes de Claude: el cuerpo del .md va como instrucciones, antes de la tarea.
 combinado() {
-  { echo "Sos el agente \`$AGENTE\` del sistema multiagente del proyecto. Tus instrucciones (de $DEF):"; echo
+  { echo "Sos el agente \`$AGENTE\` del sistema multiagente de AcmeOrg. Tus instrucciones (de $DEF):"; echo
     awk 'n >= 2 { print } /^---$/ { n++ }' "$DEF"
     echo; echo "Reglas del proyecto: $MAQ/AGENTS.md (y CLAUDE.md, al que apunta). Trabajás en: $RAIZ"
     echo; echo "## Tarea"; cat "$PROMPT"; } > "$1"
@@ -29,7 +29,7 @@ combinado() {
 case $MOTOR in
   claude)
     IFS=',' read -ra T <<< "$TOOLS"; PERM=(); for t in "${T[@]}"; do t=${t// /}; [[ -n $t ]] && PERM+=("$t"); done
-    # --agent solo encuentra .claude/agents/ desde la raíz del proyecto.
+    # --agent solo encuentra .claude/agents/ desde la raíz de AcmeOrg.
     (cd "$MAQ" && timeout 30m claude -p --agent "$AGENTE" --add-dir "$RAIZ" \
        $( ((ESCRIBE)) && echo --permission-mode acceptEdits ) ${PERM:+--allowedTools "${PERM[@]}"} \
        < "$PROMPT" > "$SALIDA" 2> "$SALIDA.err") ;;

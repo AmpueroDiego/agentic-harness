@@ -1,6 +1,8 @@
 ---
 name: ux
 description: "Revisión experta de UX/UI y accesibilidad de una pantalla de web-app con el agente ux-ui (mira la app viva, mide contraste y teclado, y propone cambios exactos). Modos auditar, deslop, accesibilidad y corregir."
+tipo: skill
+tags: [harness]
 ---
 <!-- generado por .claude/scripts/generar-skills-codex.py; no editar a mano -->
 

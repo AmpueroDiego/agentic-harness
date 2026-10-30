@@ -2,7 +2,7 @@
 """Audita la configuracion de Obsidian contra los archivos que realmente existen.
 
 Nada de esto se versiona: .obsidian/ esta en el .gitignore, asi que los grupos
-de color, las fuerzas y las exclusiones viven solo en la máquina de cada uno.
+de color, las fuerzas y las exclusiones viven solo en la maquina de cada uno.
 Se desfasan en silencio — el 2026-09-09 habia dos grupos apuntando a carpetas
 inexistentes, un repo entero sin color y la documentacion decia 13 grupos
 cuando habia 21.

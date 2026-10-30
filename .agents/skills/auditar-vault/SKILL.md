@@ -1,6 +1,8 @@
 ---
 name: auditar-vault
 description: "Audita la salud del vault de Obsidian — grafo de enlaces, grupos de color, exclusiones y junctions — y propone correcciones sin aplicar ninguna."
+tipo: skill
+tags: [harness]
 ---
 <!-- generado por .claude/scripts/generar-skills-codex.py; no editar a mano -->
 

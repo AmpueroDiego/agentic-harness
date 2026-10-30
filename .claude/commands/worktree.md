@@ -1,25 +1,27 @@
 ---
+tipo: comando
+tags: [sistema-multiagente]
 description: Crea, lista, sincroniza con develop y cierra worktrees de los repos hijos (api-core, web-app…) para trabajar varias tarjetas en paralelo, una sesión por worktree.
 argument-hint: crear <repo> <feature|fix>/<slug> [--run NNNN] [--bd-docker [--seed]] | listar | sincronizar <repo>--<slug> [--seguido] | cerrar <repo>--<slug>
 ---
 
 Acción pedida: $ARGUMENTS
 
-**Para qué existe** *(2026-09-11)*: trabajar por olas — varias tarjetas a la vez, cada una en su rama y su carpeta — sin que una sesión pise a otra. La herramienta nativa de worktrees de Claude Code no sirve acá: crea worktrees de `AcmeOrg/` (agentic-harness, en `.claude/worktrees/`), no de los repos hijos.
+**Para qué existe**: trabajar por olas — varias tarjetas a la vez, cada una en su rama y su carpeta — sin que una sesión pise a otra. La herramienta nativa de worktrees de Claude Code no sirve acá: crea worktrees de `AcmeOrg/` (agentic-harness, en `.claude/worktrees/`), no de los repos hijos.
 
 **Reglas fijas:**
 - Los worktrees viven en `AcmeOrg/.worktrees/<repo>--<slug>/`. El punto inicial lo esconde de Obsidian, y la palabra `worktrees` lo saca de `scripts/validar-vault.py` — sin eso el vault vería copias duplicadas de cada run doc.
 - **La sesión de Claude se abre siempre en la raíz de `AcmeOrg/`**, nunca dentro del worktree: solo ahí cargan `CLAUDE.md`, los agentes, los hooks y la memoria. El worktree se trabaja como destino (`/orquestar --en .worktrees/<repo>--<slug> ...`).
 - Repos válidos: `api-core`, `api-contracts`, `api-people`, `api-auth`, `api-delivery`, `web-app`.
 - Todo `git` va con `git -C <ruta>`; nada de `cd` compuesto.
-- **Ni este comando ni `/orquestar --en` suben ramas ni abren PRs** *(pedido del responsable del repo, 2026-09-11)*. Dejan la rama verificada y lista; el push y el PR contra `develop` se hacen solo cuando el responsable del repo los pide, rama por rama. No los ofrezcas al cerrar un paso.
+- **Ni este comando ni `/orquestar --en` suben ramas ni abren PRs**. Dejan la rama verificada y lista; el push y el PR contra `develop` se hacen solo cuando el responsable los pide, rama por rama. No los ofrezcas al cerrar un paso.
 - **Nada se borra sin aprobación expresa** (`CLAUDE.md`): ni ramas locales ni remotas, ni worktrees con trabajo, ni `--force`.
 - Nunca leer ni mostrar el contenido de los archivos de configuración local que se copian — solo sus nombres.
 
 ## crear <repo> <feature|fix>/<slug> [--run NNNN] [--bd-docker [--seed]]
 
 1. Valida que `<repo>` esté en la lista y que la rama siga la convención `feature/<slug>` o `fix/<slug>` (minúsculas y guiones).
-2. `git -C <repo> fetch origin develop`. Si falla por credenciales, pídele al responsable del repo que lo corra él con `!` — no sigas con un `develop` viejo.
+2. `git -C <repo> fetch origin develop`. Si falla por credenciales, pídele al responsable que lo corra él con `!` — no sigas con un `develop` viejo.
 3. La rama no debe existir: `git -C <repo> rev-parse --verify --quiet refs/heads/<rama>` y `git -C <repo> ls-remote --heads origin <rama>`. Si existe en cualquiera de los dos, **para y pregunta**: ¿reusarla (`worktree add <ruta> <rama>`) o elegir otro nombre?
 4. Crea el worktree desde `origin/develop`, sin upstream:
    `git -C <repo> worktree add --no-track -b <rama> "<AcmeOrg>/.worktrees/<repo>--<slug>" origin/develop`
@@ -37,14 +39,14 @@ Acción pedida: $ARGUMENTS
 
 ## BD propia en Docker (`--bd-docker`)
 
-*(2026-09-11, aprobado por el responsable del repo.)* **Solo para ramas de `api-core` que traen migración.** Todos los worktrees comparten los mismos `user-secrets`, así que sin esto todos apuntan a la misma base: dos ramas con migraciones distintas se rompen entre sí, y ninguna debe tocar la base local del responsable del repo ni la de dev.
+**Solo para ramas de `api-core` que traen migración.** Todos los worktrees comparten los mismos `user-secrets`, así que sin esto todos apuntan a la misma base: dos ramas con migraciones distintas se rompen entre sí, y ninguna debe tocar la base local del responsable ni la de dev.
 
-**Qué cubre y qué no:** api-core tiene un solo `DbContext` (`CoreDbContext`), que resuelve su cadena en `PersistenceServiceRegistration.ObtenerCadenaConexionSql` — primero `ConnectionStrings:ConexionSql`, después `ConnectionStrings:CoreDb`. Eso es lo único que va a Docker. People, Contracts y Delivery api-core los consume por HTTP contra dev, en solo lectura, igual que siempre.
+**Qué cubre y qué no:** api-core tiene un solo `DbContext` (`CoreDbContext`), que resuelve su cadena en `PersistenceServiceRegistration.ObtenerCadenaConexionSql` — primero `ConnectionStrings:ConexionSql`, después `ConnectionStrings:CoreDb`. Eso es lo único que va a Docker. Los servicios api-people, api-contracts y api-delivery los consume api-core por HTTP contra dev, en solo lectura, igual que siempre.
 
-**Git Bash reescribe las rutas Linux** que ve en un argumento: `/opt/mssql-tools18/bin/sqlcmd` le llega a Docker como `C:/Program Files/Git/opt/...` y falla con "No such file or directory" (verificado 2026-09-11). **Todo** `docker exec` o `docker cp` con una ruta del contenedor lleva `MSYS_NO_PATHCONV=1` delante.
+**Git Bash reescribe las rutas Linux** que ve en un argumento: `/opt/mssql-tools18/bin/sqlcmd` le llega a Docker como `C:/Program Files/Git/opt/...` y falla con "No such file or directory" (verificado). **Todo** `docker exec` o `docker cp` con una ruta del contenedor lleva `MSYS_NO_PATHCONV=1` delante.
 
 1. **Solo `api-core`**: con otro repo, rechaza la opción y explica por qué.
-2. `docker info` debe responder; si Docker no está levantado, **para** y pídele al responsable del repo que lo inicie.
+2. `docker info` debe responder; si Docker no está levantado, **para** y pídele al responsable que lo inicie.
 3. **Puerto**: el primero libre desde `14331` — libre significa sin `LISTENING` en `netstat -ano` y sin aparecer en `docker ps --format "{{.Ports}}"`.
 4. **Contraseña**: generada al azar (`python -c "import secrets; print('Wt9!' + secrets.token_urlsafe(18))"`, el prefijo cubre la complejidad que exige SQL Server) y escrita **solo** en `AcmeOrg/.worktrees/<repo>--<slug>.bd.env`, fuera del worktree y dentro de una carpeta ignorada:
    ```
@@ -59,16 +61,16 @@ Acción pedida: $ARGUMENTS
    Espera a que acepte conexiones: reintenta `docker exec -e SQLCMDPASSWORD="$PW" core-bd--<slug> /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -Q "SELECT 1"` hasta 90 s. Si no levanta, muestra `docker logs --tail 30 core-bd--<slug>` y **para**.
 6. **Cadena de conexión** — se arma en el comando, nunca se guarda en `user-secrets` ni en un `appsettings`:
    `CS="Server=localhost,<puerto>;Database=CoreDb;User Id=sa;Password=$PW;TrustServerCertificate=True"`
-   La base se llama `CoreDb` porque `AcmeOrg/scripts/seed-crm-data-sintetica.sql` hace `USE [CoreDb]`.
-   **Los scripts de semilla viven en `AcmeOrg/scripts/`, no dentro de `api-core/`** *(corregido 2026-09-14, primera ejecución real de `--bd-docker`: este archivo los daba por relativos al repo y no existen ahí).*
+   La base se llama `CoreDb` porque `AcmeOrg/scripts/seed-core-data-sintetica.sql` hace `USE [CoreDb]`.
+   **Los scripts de semilla viven en `AcmeOrg/scripts/`, no dentro de `api-core/`.**
 7. **Migraciones de la rama** — HARD RULE: antes de ejecutar, comprueba en el mismo comando que `$CS` empieza con `Server=localhost,<puerto>;` y aborta si no. Un `database update` que cae en la cadena de los `user-secrets` es exactamente lo que esto existe para evitar.
    `ConnectionStrings__ConexionSql="$CS" dotnet ef database update --project <ruta>/Persistence --startup-project <ruta>/Host --connection "$CS"`
-   La variable **y** `--connection`, las dos: si una fallara, la otra sigue apuntando a Docker. El comando pide aprobación del responsable del repo por permisos; es lo esperado.
+   La variable **y** `--connection`, las dos: si una fallara, la otra sigue apuntando a Docker. El comando pide aprobación del responsable por permisos; es lo esperado.
 8. **Datos base**:
    - Siempre `AcmeOrg/scripts/seed-outbox-retry-policy.sql`: sin esas dos policies el job del Outbox no tiene con qué resolver reintentos (los tests de integración siembran las mismas).
-     **Ese script aborta contra una base local**: trae un guard `IF DB_NAME() <> N'CRM'` puesto para Azure, donde protege de sembrar la base equivocada en un servidor compartido — pero acá la base se llama `CoreDb` y el guard corta con `ABORTADO: este script debe correr sobre la base [CRM]`. **No edites el original**: copialo al scratchpad ampliando el guard a `IF DB_NAME() NOT IN (N'CRM', N'CoreDb')` y corré la copia. Los dos `INSERT` que siembra son idempotentes (`IF NOT EXISTS`), sin `DROP` ni `DELETE`. *(Verificado 2026-09-14.)*
-   - Con `--seed`, además `AcmeOrg/scripts/seed-crm-data-sintetica.sql` (casos y tareas sintéticos para probar la UI).
-   - Los dos son idempotentes (`IF NOT EXISTS`, sin `DROP` ni `DELETE`). Se corren con `docker cp` + `sqlcmd -I -f 65001 -d CoreDb -i`. **`-I` es obligatorio** *(corregido 2026-09-14, primera ejecución real)*: `sqlcmd` arranca con `QUOTED_IDENTIFIER` apagado, y cualquier `INSERT` sobre una tabla con índice filtrado falla con `Msg 1934`. `-f 65001` hace que lea el script en UTF-8, sin romper las tildes. Si el script usa transacción con `XACT_ABORT`, el fallo no deja filas a medias.
+     **Ese script aborta contra una base local**: trae un guard `IF DB_NAME() <> N'Core'` puesto para Azure, donde protege de sembrar la base equivocada en un servidor compartido — pero acá la base se llama `CoreDb` y el guard corta con `ABORTADO: este script debe correr sobre la base [Core]`. **No edites el original**: copialo al scratchpad ampliando el guard a `IF DB_NAME() NOT IN (N'Core', N'CoreDb')` y corré la copia. Los dos `INSERT` que siembra son idempotentes (`IF NOT EXISTS`), sin `DROP` ni `DELETE`. *(Verificado 2026-09-14.)*
+   - Con `--seed`, además `AcmeOrg/scripts/seed-core-data-sintetica.sql` (entidades y operaciones sintéticas para probar la UI).
+   - Los dos son idempotentes (`IF NOT EXISTS`, sin `DROP` ni `DELETE`). Se corren con `docker cp` + `sqlcmd -I -f 65001 -d CoreDb -i`. **`-I` es obligatorio**: `sqlcmd` arranca con `QUOTED_IDENTIFIER` apagado, y cualquier `INSERT` sobre una tabla con índice filtrado falla con `Msg 1934`. `-f 65001` hace que lea el script en UTF-8, sin romper las tildes. Si el script usa transacción con `XACT_ABORT`, el fallo no deja filas a medias.
    - **No** `AcmeOrg/scripts/crear-request-response-log.sql`: es el equivalente manual de una migración que el paso 7 ya aplicó.
 
 **Levantar el Host de un worktree con BD propia:**
@@ -95,8 +97,8 @@ Cierra con una línea por worktree que está **atrás** de develop y ya tiene PR
 
 El paso antes de abrir el PR, y otra vez cada vez que develop avance mientras el PR espera revisión. Protege contra la regresión que el diff no muestra: dos ramas que por separado compilan y juntas no.
 
-**Dos modos** *(pedido explícito del responsable del repo, 2026-09-11)*:
-- **Paso a paso (por defecto):** al terminar cada punto (migraciones, merge, build y tests, fila de `INDEX.md`, revisión del diff), reporta el resultado en 2-3 líneas y **espera a que el responsable del repo diga "sigue"** antes de empezar el siguiente. Nunca encadenes dos puntos en el mismo turno. Los puntos 1 y 2 (árbol limpio, fetch) son solo lectura y van juntos con el de migraciones.
+**Dos modos**:
+- **Paso a paso (por defecto):** al terminar cada punto (migraciones, merge, build y tests, fila de `INDEX.md`, revisión del diff), reporta el resultado en 2-3 líneas y **espera a que el responsable diga "sigue"** antes de empezar el siguiente. Nunca encadenes dos puntos en el mismo turno. Los puntos 1 y 2 (árbol limpio, fetch) son solo lectura y van juntos con el de migraciones.
 - **`--seguido`:** corre todos los puntos de corrido y cierra con un solo resumen.
 
 **En los dos modos se para igual ante un problema**: snapshot compartido, conflicto no trivial, build o test que falla, configuración local en el diff. Ahí no ofrezcas seguir: muestra el problema y las opciones, y espera la decisión. `--seguido` solo se salta las confirmaciones cuando todo sale bien.
@@ -111,49 +113,70 @@ El paso antes de abrir el PR, y otra vez cada vez que develop avance mientras el
    - .NET: `dotnet build` + `dotnet test` de los proyectos de unit y arquitectura. Los de integración solo si la rama toca acceso a datos (mismo criterio que el Step 4.4a de `/orquestar`).
    - `web-app`: `npm run build`, `npm run test`, `npm run lint`.
    - Si algo falla, **no lo arregles acá**: repórtalo. El arreglo va por `/orquestar --en` en la misma rama.
-6. Registro de la corrida: los run docs ya no viajan en la rama — `/orquestar` los escribe directo en `docs/runs/` de la raíz de AcmeOrg *(desde 2026-09-16)*. Solo verifica que cada corrida de la rama figure en `docs/runs/INDEX.md` (mapa de conocimiento + libro mayor, formato del Step 5 de `/orquestar`); si falta, agrégala y comitea en `agentic-harness`, no en la rama. Como todas las sesiones escriben el mismo `INDEX.md`, edita filas puntuales: nunca reescribas el archivo entero.
+6. Registro de la corrida: los run docs ya no viajan en la rama — `/orquestar` los escribe directo en `docs/runs/` de la raíz de AcmeOrg. Solo verifica que cada corrida de la rama figure en `docs/runs/INDEX.md` (mapa de conocimiento + libro mayor, formato del Step 5 de `/orquestar`); si falta, agrégala y comitea en `agentic-harness`, no en la rama. Como todas las sesiones escriben el mismo `INDEX.md`, edita filas puntuales: nunca reescribas el archivo entero.
+   **Barrera (retro 2026-10-23, tercera vez que pasa):** antes de seguir, ningún run doc de `docs/runs/` puede quedar sin fila en el libro mayor: `for f in docs/runs/[0-9][0-9][0-9][0-9]-*.md; do n=$(basename $f | cut -c1-4); grep -q "$n" docs/runs/INDEX.md || echo "sin fila: $f"; done`. Si lista algo, **para** y muéstralo; la sesión coordinadora agrega las filas antes de pasar al punto 7.
+   **Y cada run doc desde que las tres líneas son obligatorias** (`fecha:` ≥ 2026-10-23, `anexo-registro.md`; retro 2026-10-27) las tiene: `for f in docs/runs/[0-9][0-9][0-9][0-9]-*.md; do [[ $(sed -n 's/^fecha: //p' $f | head -1) < 2026-10-23 ]] && continue; for l in '^Codex: rondas hasta 2 limpias' '^Escapó al QA:' '^## Reglas que rompí'; do grep -q "$l" $f || echo "$f sin: $l"; done; done`. Si lista algo, **para** igual: se completan (con 0, «no» o «ninguna») antes del punto 7.
 7. Revisión previa al push (memoria `feedback-multi-repo-push-review-discipline`, regla 1): `git -C <ruta> diff --stat origin/develop...HEAD` y lectura **archivo por archivo** del diff completo buscando configuración local filtrada — cadenas de conexión, `localhost`, `.env`, restos de depuración. Señala lo sospechoso; no lo incluyas ni lo saques en silencio.
-8. Reporta: merge limpio o con qué conflictos, resultado de build y tests, y si está lista para PR. **No pushea, no abre PR y no lo ofrece.** Cuando el responsable del repo lo pida: `git -C <ruta> push -u origin <rama>` y `gh pr create --base develop --body-file <archivo UTF-8>`.
+7b. **Simular la cola de merges**: la rama tiene que entrar limpia a develop. Revisor Principal mergea uno por uno en el orden de la columna `En revisión (Revisor Principal)`, así que "merge limpio con develop" no alcanza: la rama tiene que entrar limpia **después** de todos los PRs que tiene delante. Sin tocar ninguna rama, con `git merge-tree`:
+   ```
+   bash .claude/scripts/simular-cola.sh <repo> <esta rama>
+   ```
+   Mergea en cadena, sobre el `origin/develop` actual, cada PR abierto del repo (por número) y al final esta rama; imprime `OK` o `CONFLICTO <#PR> <rama> <archivos>` por cada uno.
+   Si choca con un PR de la cola, **se resuelve en esta rama** (merge de la rama previa, nunca rebase) antes del PR, y el cuerpo del PR dice que lo trae. Las otras tres prácticas que evitan llegar acá: ramas cortas y PRs chicos, no abrir ramas en paralelo sobre archivos que toca un PR abierto (regla de olas), y la rama al día con develop.
+8. Reporta: merge limpio o con qué conflictos, resultado de build y tests, resultado de la simulación de la cola, y si está lista para PR. **No pushea, no abre PR y no lo ofrece.** Cuando el responsable lo pida: `bash .claude/scripts/entregar-pr.sh <repo> <worktree> <tarjeta> <cuerpo.md> --titulo "..."` (primero con `--simular`), que valida rama, árbol limpio y las secciones `## Antes` / `## Ahora` / `## Qué se arregló`, hace el push -u, `gh pr create --base develop --reviewer <revisor-principal>`, adjunta el PR a la tarjeta y, si sigue en `En desarrollo`, la pasa a `En revisión (el responsable)`.
 
 ## cerrar <repo>--<slug>
 
-Solo cuando el PR ya se mergeó.
+Solo cuando el PR ya se mergeó, o se cerró sin mergear y su tarjeta ya quedó en orden (punto 1).
 
 1. Verifica, y muestra el resultado de cada punto:
    - PR mergeado a `develop`: `gh pr list --repo <owner/repo> --head <rama> --state merged --json number,baseRefName,mergedAt`.
    - Worktree limpio: `git -C <ruta> status --porcelain` vacío.
    - Nada sin pushear: `git -C <ruta> log --oneline origin/<rama>..HEAD` vacío.
+   - Tarjeta *(retro 2026-10-27)*: `python .claude/tools/pr/cola_trello.py <repo>#<PR>` verifica que el PR siga adjunto y en qué columna está. Si el PR se cerró **sin mergear** (`CERRADO SIN MERGE`), no se cierra el worktree hasta que la tarjeta quede sin ese adjunto o archivada, con OK del responsable (propuesta por `/trello`).
 2. Si algo falla, **para** y dilo. Nunca `--force`.
 3. Propón `git -C <repo> worktree remove "<ruta>"` y espera aprobación expresa. Borra la carpeta, incluidas las copias de configuración local.
    Si el worktree tiene BD propia, en la **misma** propuesta: `docker rm -f core-bd--<slug>` y borrar `.worktrees/<repo>--<slug>.bd.env`. Avisa que se pierden los datos de esa base (sintéticos, pero se pierden). Antes, confirma con `docker ps -a --filter label=acmeorg.worktree=<repo>--<slug>` que el contenedor es el de esta rama y no otro.
-4. **La rama local y la remota no se tocan**: borrarlas es una decisión aparte que el responsable del repo pide explícitamente.
+4. **La rama local y la remota no se tocan**: borrarlas es una decisión aparte que el responsable pide explícitamente.
+
+## Pila de PRs (trabajo grande partido)
+
+*(el responsable, 2026-10-09: un PR de 80 commits, le da al bot superficie nueva en cada ronda.)* Si una tarjeta va a pasar de ~400 líneas, se parte en PRs apilados con git y `gh` (sin Graphite ni git-town: Graphite pide permisos de la organización y git-town no ahorra nada que los agentes no hagan ya).
+
+**Como máximo 2 PRs apilados** *(el responsable, 2026-10-19: una cadena de 6 PRs de una funcionalidad, multiplicó las rondas: cada arreglo abajo reiniciaba las de arriba)*. Si hay más partes, cada una sale de `develop` aunque tarde más en mergearse.
+
+1. **Partes:** cada una compila, pasa sus tests y se entiende sola; `parte-1` sale de `develop`, `parte-2` de `parte-1`. Ramas `feature/<slug>-1`, `-2`. **Un worktree por rama, con su nombre, y nunca `checkout` dentro de él**: `git -C <repo> worktree add --no-track -b feature/<slug>-2 "<AcmeOrg>/.worktrees/<repo>--<slug>-2" feature/<slug>-1`. Así `propagar.sh` encuentra cada rama abierta.
+2. **PRs:** el de abajo `--base develop`; el de arriba `--base feature/<slug>-1` (el guard lo permite; solo bloquea main/qa). En la descripción: "Pila: parte n de N, va después de #<pr de abajo>". Todos se adjuntan a la misma tarjeta.
+3. **Arreglo en una parte de abajo:** se commitea ahí y se pasa hacia arriba con `bash .claude/scripts/propagar.sh <repo> <rama-baja> <rama-alta>` (merge en orden, chequeo tras cada merge, `rerere` activo; `PUSH=1` sube). Nunca `rebase` ni force push.
+4. **Merge en orden, de abajo hacia arriba, con «Create a merge commit»** (no squash: la de arriba contiene los commits de la de abajo). Al entrar la de abajo, la base de la siguiente se cambia **a mano** a `develop` (`gh pr edit <n> --base develop`), y antes de mergearla, `/worktree sincronizar` sobre ella (+ `verificar-pr.sh` en web-app).
+5. **Codex:** las rondas de `/supercodex` corren por PR, sobre su propio diff. Tras un push que solo trajo lo propagado, `rondas-vigentes.sh` dice si las limpias siguen valiendo (paso 4d).
 
 ## Plan de ola
 
-Antes de crear los worktrees de una ola se fijan las decisiones que después son caras de cambiar. Una fila por tarjeta, en la fila de la ola en `TASKS.md` o en el doc que el responsable del repo indique:
+Antes de crear los worktrees de una ola se fijan las decisiones que después son caras de cambiar. Una fila por tarjeta, en la fila de la ola en `TASKS.md` o en el doc que el responsable indique:
 
-| Tarjeta | Repo | Rama | Run reservado | Áreas / archivos que toca | Migración (DbContext) | BD para probar en vivo | Interfaz que expone a otra tarjeta |
+| Tarjeta | Repo | Rama | Run reservado | Áreas / archivos que toca | Migración (DbContext) | BD para probar en vivo | Contrato que expone a otra tarjeta |
 |---|---|---|---|---|---|---|---|
 
 Reglas para armarla:
-- **Dos tarjetas que tocan los mismos archivos no van en la misma ola** — o se juntan en una sola rama si son la misma pantalla/feature del mismo repo (criterio del plan del 2026-09-10).
-- **Máximo una tarjeta con migración por `DbContext` por ola.** En api-core eso significa una sola por ola: `CoreDbContext` es su único `DbContext` en `develop` (verificado 2026-09-11).
+- **Dos tarjetas que tocan los mismos archivos no van en la misma ola** — o se juntan en una sola rama si son la misma pantalla/feature del mismo repo (criterio del plan).
+- **Máximo una tarjeta con migración por `DbContext` por ola.** En api-core eso significa una sola por ola: `CoreDbContext` es su único `DbContext` en `develop` (verificado).
 - **BD para probar en vivo**: "ninguna" (frontend, o se prueba solo con tests) o "Docker propio" (`--bd-docker`), obligatoria para toda tarjeta de api-core con migración que se vaya a levantar.
 - **Nunca una rama creada desde otra rama sin mergear.** Si B necesita código de A, B va en la ola siguiente.
 - **Run reservado**: el siguiente número libre en `docs/runs/` de la raíz de AcmeOrg, más uno por tarjeta de la ola. Se reserva acá para que dos sesiones paralelas no tomen el mismo.
-- **ADR reservado** *(desde 2026-09-16)*: si una tarjeta de la ola puede generar un ADR, el siguiente número libre en `docs/adr/` de la raíz de AcmeOrg, más uno por tarjeta que lo necesite. Mismo motivo que el run: todas las sesiones escriben en la misma carpeta.
-- Si una tarjeta expone un DTO o endpoint que otra de la **misma** ola consume, la interfaz (nombres y tipos de campos) se escribe en esta tabla antes de empezar, y ninguna de las dos lo cambia sin avisar.
+- **ADR reservado**: si una tarjeta de la ola puede generar un ADR, el siguiente número libre en `docs/adr/` de la raíz de AcmeOrg, más uno por tarjeta que lo necesite. Mismo motivo que el run: todas las sesiones escriben en la misma carpeta.
+- Si una tarjeta expone un DTO o endpoint que otra de la **misma** ola consume, el contrato (nombres y tipos de campos) se escribe en esta tabla antes de empezar, y ninguna de las dos lo cambia sin avisar.
 
 **Probar en vivo desde un worktree**: los puertos son los mismos que en la carpeta principal (<PORT_CORE>, 5173…). Se levanta un solo Host a la vez; antes de `dotnet build` en otro worktree no hace falta frenar nada (cada carpeta tiene su propio `bin/`), pero sí antes de levantar un segundo Host en el mismo puerto.
 
-**Varias sesiones a la vez: un solo Host con canales activos** *(pedido real de un responsable de repo: "si tenemos 2 sesiones o más usando el mismo canal externo, por si en algún momento se cruza")*. Los canales externos con estado propio (una integración de mensajería con una sola sesión activa y un solo webhook, un buzón de correo compartido) son recursos que ningún worktree aísla — si tu proyecto tiene uno, trátalo igual: el poller que lo consume marca como leído/procesado cada mensaje que registra, así que dos Hosts corriendo a la vez se roban los mensajes entre sí.
+**Varias sesiones a la vez: un solo Host con canales activos**. Los canales son recursos compartidos que ningún worktree aísla: el proveedor externo local (una sola sesión de mensajería, un solo webhook) y el buzón de correo de los `user-secrets` — el poller de api-core marca como leído (`Seen`) cada correo que registra, así que dos Hosts se roban los mensajes entre sí.
 - **Antes de levantar un Host**, cualquier sesión mira si ya hay otro: `netstat -ano | grep ":<PORT_CORE> " | grep LISTENING` y el `CommandLine` de ese PID (`powershell -NoProfile -Command "(Get-CimInstance Win32_Process -Filter 'ProcessId=<pid>').CommandLine"`), para saber de qué carpeta es.
-- **Si hay otro, no lo bajes**: puede ser de otra sesión o del responsable del repo. Díselo y pregunta cuál queda arriba.
-- Las pruebas contra un canal externo con estado propio se hacen **de a una sesión por vez**. Las que no tocan esos canales no necesitan Host: los tests unitarios ya los simulan.
+- **Si hay otro, no lo bajes**: puede ser de otra sesión o del responsable. Díselo y pregunta cuál queda arriba.
+- Las pruebas de mensajería y correo se hacen **de a una sesión por vez**. Las que no tocan canales no necesitan Host: los tests unitarios ya simulan Proveedor externo y correo.
 
-**Un canal externo con sesión propia: uno solo, compartido, y nunca desde un worktree** — si tu proyecto integra algo así (un servicio de mensajería con QR/pairing, una sesión de bot, etc.):
-- **Nunca levantes su propio `docker compose` dentro de un worktree.** Compose toma el nombre del proyecto de la carpeta: desde `api-core/` crea un contenedor, pero desde `.worktrees/api-core--<slug>/` crearía otro con **otro volumen de sesión, vacío** (hay que re-vincular/escanear de nuevo) y chocaría de puerto. Ese servicio se levanta solo desde la carpeta principal `api-core/`.
+**Proveedor externo: uno solo, compartido, y nunca desde un worktree**:
+- **Nunca `docker compose -f docker-compose.messaging.yml up` dentro de un worktree.** Compose toma el nombre del proyecto de la carpeta: desde `api-core/` crea `api-core-messaging-1`, pero desde `.worktrees/api-core--<slug>/` crearía otro contenedor con **otro volumen de sesiones, vacío** (mensajería sin vincular, hay que escanear el QR de nuevo) y chocaría en el puerto <PORT_CHANNEL>. El proveedor externo local se levanta solo desde la carpeta principal `api-core/`.
 - Sirve al único Host que esté levantado: el webhook de su sesión apunta al puerto <PORT_CORE>, que es el mismo en todos los worktrees.
-- Los tests no lo necesitan: unitarios con un mock del cliente del canal.
-- **Nunca apuntar un worktree a la instancia compartida de un ambiente remoto** (`<host-canal-externo>`): es la de dev, no un sandbox por worktree.
-- Si el canal envía a destinatarios reales, una prueba de envío va solo a destinatarios propios.
+- Los tests no lo necesitan: unitarios con `Mock<IApiMessagingService>`.
+- **Nunca apuntar un worktree al Proveedor externo de la VM de Azure** (`<host-canal-externo>`): es el de dev.
+- El número vinculado es real: una prueba de envío va solo a números propios.

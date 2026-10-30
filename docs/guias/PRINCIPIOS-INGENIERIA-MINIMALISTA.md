@@ -1,26 +1,20 @@
 ---
 tipo: guia-oficial
+fecha: 2026-09-14
 tags: [principios, minimalismo, ingenieria, pipeline, gobernanza]
 ---
 
+> 🏠 **Navegación:** [[Home|Home (Dashboard)]] · [[docs/guias/PLAYBOOK-ANTI-REGRESIONES-Y-LECCIONES-APRENDIDAS|Playbook Anti-Regresiones]] · [[docs/guias/ESTANDAR-ENTREGA-TRELLO-Y-GITHUB|Estándar de Entrega]]
+
 # Principios de ingeniería minimalista
 
-> Versión genérica: se quitaron las fechas y el nombre del proyecto original. Investigación con
-> fuentes primarias; lo que es atribución popular sin fuente confirmada se marca como tal.
-
-Cuestionar requisitos, borrar partes o procesos, optimizar solo lo esencial, acelerar el ritmo y
-automatizar al final — y después volver al primer paso. Aplica a cada feature **y al propio
-pipeline de agentes**.
+Pedido del responsable (2026-09-14): cuestionar requisitos, borrar partes o procesos, optimizar solo lo esencial, acelerar el ritmo y automatizar al final, y después volver al primer paso. Aplica a cada feature y **al propio pipeline de agentes**. Investigación con fuentes primarias; lo que es atribución popular sin fuente se marca así.
 
 ## Cómo se llama esta mentalidad
 
-Es **"el algoritmo"** de 5 pasos que describió **Elon Musk** en la entrevista de Starbase con Tim
-Dodd (Everyday Astronaut, agosto de 2021), y que Walter Isaacson formaliza en el capítulo "The
-Algorithm" de su biografía (2023). Su base es el **razonamiento desde primeros principios**:
-partir de lo que es fundamentalmente cierto, no de la analogía ("siempre se hizo así").
+Es **"el algoritmo"** de 5 pasos que describió **Elon Musk** en la entrevista de Starbase con Tim Dodd (Everyday Astronaut, agosto de 2021), y que Walter Isaacson formaliza en el capítulo "The Algorithm" de su biografía (2023). Su base es el **razonamiento desde primeros principios**: partir de lo que es fundamentalmente cierto, no de la analogía ("siempre se hizo así").
 
-No es un método académico: es una heurística de la industria. Lo que la hace sólida es que
-**cada paso tiene respaldo independiente** en literatura seria (sección 3).
+No es un método académico: es una heurística de la industria. Lo que la hace sólida es que **cada paso tiene respaldo independiente** en literatura seria (sección 3).
 
 - [Entrevista Starbase 2021](https://everydayastronaut.com/starbase-tour-and-interview-with-elon-musk/)
 - [Texto de Isaacson](https://www.corporate-rebels.com/blog/musks-algorithm-to-cut-bureaucracy)
@@ -43,7 +37,7 @@ No es un método académico: es una heurística de la industria. Lo que la hace 
 
 Después del paso 5 se vuelve al 1: lo automatizado también se cuestiona.
 
-## 2. Diez principios aplicados a un pipeline de agentes
+## 2. Los 10 principios para AcmeOrg
 
 Cada uno con su regla, cómo aplicarlo en una feature o PR, un antiejemplo y la fuente.
 
@@ -60,7 +54,7 @@ Cada uno con su regla, cómo aplicarlo en una feature o PR, un antiejemplo y la 
 3. **La cerca de Chesterton**
    - **Regla:** solo se borra lo que se entiende.
    - **Aplicar:** `git blame`, dueño y razón antes de quitar código, una validación o una regla.
-   - **Antiejemplo:** quitar un guard de seguridad porque "parece redundante".
+   - **Antiejemplo:** quitar el guard de `HttpsRedirection` porque "parece redundante".
    - **Fuente:** Chesterton, *The Thing* (1929).
 4. **Optimizar solo lo que sobrevivió, midiendo**
    - **Regla:** nada se optimiza sin medición.
@@ -75,7 +69,7 @@ Cada uno con su regla, cómo aplicarlo en una feature o PR, un antiejemplo y la 
 6. **Lotes chicos y poco trabajo en curso**
    - **Regla:** una tarjeta = una rama = un worktree, con PRs pequeños.
    - **Aplicar:** dividir el PR si mezcla migración, refactor y feature.
-   - **Antiejemplo:** un PR con 3 temas y muchas rondas de revisión.
+   - **Antiejemplo:** un PR con 3 temas y 12 rondas de revisión.
    - **Fuente:** Reinertsen (2009); *Accelerate*/DORA (2018); Beck, *Tidy First?* (2023).
 7. **Puertas de una y de dos vías**
    - **Regla:** lo reversible se decide rápido; lo irreversible (una migración de datos, un contrato público de API) se delibera.
@@ -84,13 +78,13 @@ Cada uno con su regla, cómo aplicarlo en una feature o PR, un antiejemplo y la 
    - **Fuente:** Bezos, carta a los accionistas de 2015.
 8. **Automatizar al final, con parada**
    - **Regla:** solo se automatiza un proceso ya simplificado y estable. El automatismo **se detiene y avisa** ante un problema (jidoka).
-   - **Aplicar:** un hook o agente nuevo recién después de varias corridas manuales exitosas, con gates humanos en lo irreversible.
+   - **Aplicar:** un hook o agente nuevo recién después de 3 corridas manuales exitosas, con gates humanos en lo irreversible.
    - **Antiejemplo:** auto-merge cuando el QA pasa, sin revisión.
    - **Fuente:** Bainbridge, *Ironies of Automation* (1983): automatizar deja al humano vigilando lo que ya no practica, justo cuando más se lo necesita. Toyota, jidoka.
 9. **Velocidad con estabilidad**
    - **Regla:** el tiempo de ciclo se mide junto con la tasa de fallos y el tiempo de recuperación.
    - **Aplicar:** contar las rondas de corrección por PR, no solo cuánto tardó.
-   - **Antiejemplo:** celebrar PRs rápidos que vuelven con varias rondas de hallazgos.
+   - **Antiejemplo:** celebrar PRs rápidos que vuelven con 3 rondas de hallazgos.
    - **Fuente:** DORA; Goodhart y Strathern (cuando una medida se vuelve objetivo, deja de ser buena medida).
 10. **El pipeline copia a su organización**
     - **Regla:** los traspasos entre agentes se notan en el código.
@@ -139,33 +133,32 @@ Cada uno con su regla, cómo aplicarlo en una feature o PR, un antiejemplo y la 
 - **Seguridad, regulación, accesibilidad y auditoría:** antes de borrar un requisito de este tipo se encuentra a su dueño (paso 1). Si no tiene dueño identificable, se trata como puerta de una vía.
 - **Cuestionar sin faltar el respeto a la regla de negocio:** la pregunta es "¿quién lo pidió y por qué?", no "esto está mal". El requisito puede ser malo sin que la persona lo sea.
 - **Goodhart:** si el paso 4 se mide solo por velocidad, se manipula. Siempre va emparejado con estabilidad.
-- **Humano en el lazo:** en un pipeline de agentes, automatizar QA, revisión adversarial o el merge sin gates humanos reproduce la ironía de Bainbridge. Los agentes se detienen y avisan, nunca actúan de forma irreversible sin aprobación.
+- **Humano en el lazo:** en este pipeline, automatizar QA, adversary o el merge sin gates humanos reproduce la ironía de Bainbridge. Los agentes se detienen y avisan, como ya hace la regla de "nunca eliminar sin aprobación" de `CLAUDE.md`.
 - **El 10 % de reagregado** es una regla de hardware, donde agregar cuesta material. En software volver a agregar es barato, así que el sesgo a no borrar puede ser mayor.
 
-## 5. Cómo entra en un pipeline de agentes
+## 5. Cómo entra en el pipeline (aprobado e integrado el 2026-09-14)
 
 - **planner:** plan con "Requisito con nombre", **"Qué quitamos"** y la marca de puerta de una o dos vías.
 - **coder / coder-web:** no agregar abstracciones, campos ni opciones que el plan no pide (YAGNI); separar cambios de estructura de cambios de comportamiento.
-- **qa:** además de correctitud, revisa "¿qué del diff sobra?".
+- **qa:** su "Chequeo anti-exceso" ya existe; se suma: "¿qué del diff sobra?".
 - **ux-ui:** aplica el paso 2 a las pantallas: antes de agregar un elemento, qué se puede quitar o colapsar.
-- **retro / system-auditor:** cada tanto, revisar qué agente, paso o regla del propio pipeline se puede borrar o fusionar.
+- **retro / system-auditor:** cada ~10 corridas, revisar qué agente, paso o regla del propio pipeline se puede borrar o fusionar.
 
-## 6. Cómo lo codifican otros agentes de IA (referencia, no exhaustivo)
+## 6. Cómo lo codifican otros agentes de IA (GitHub)
 
-Estrellas aproximadas al momento de investigar, **no verificadas a mano** — sirven de referencia
-de mercado, no de recomendación de instalación directa.
+Estrellas aproximadas al 2026-09-14, **no verificadas a mano**.
 
-| Repo | Qué lo hace efectivo | Qué tomar |
+| Repo | Qué lo hace efectivo | Qué tomamos |
 |---|---|---|
-| [anthropics/claude-plugins-official → `code-simplifier`](https://github.com/anthropics/claude-plugins-official/blob/main/plugins/code-simplifier/agents/code-simplifier.md) (oficial de Anthropic) | Conserva el comportamiento, **toca solo el código recién modificado**, prohíbe lo "ingenioso" (ternarios anidados, one-liners) y prefiere lo explícito a lo breve. No elimina abstracciones útiles | Su lista de "no hacer" como guardarraíl para el coder |
-| [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) (interpretación de un post de Karpathy, no un texto suyo) | 4 reglas en una pantalla: pensar antes de codear, simplicidad primero, **cambios quirúrgicos** (el código muerto ajeno se menciona, no se borra) y criterio de éxito verificable antes de empezar | "Menciona, no borres" para el coder; "criterio de éxito antes de codear" para el planner |
-| [obra/superpowers](https://github.com/obra/superpowers) | Lluvia de ideas obligatoria con 2–3 enfoques antes de codear, planes con YAGNI explícito y **revisión en dos etapas: primero cumplimiento del plan, después calidad** | Revisión del QA en dos pasadas |
-| [EveryInc/compound-engineering-plugin → `code-simplicity-reviewer`](https://github.com/EveryInc/compound-engineering-plugin) | Revisor final dedicado solo a minimalismo: violaciones de YAGNI, sobreabstracción y redundancia | Separar el checklist de minimalismo del de corrección |
-| [wezendy/elon-musk-algorithm-skills](https://github.com/wezendy/elon-musk-algorithm-skills) | Una skill por paso con **gate**: no se pasa al siguiente sin cerrar el anterior; cada requisito con originador humano con nombre | El gate por paso y el campo "dueño del requisito" |
+| [anthropics/claude-plugins-official → `code-simplifier`](https://github.com/anthropics/claude-plugins-official/blob/main/plugins/code-simplifier/agents/code-simplifier.md) (oficial de Anthropic) | Conserva el comportamiento, **toca solo el código recién modificado**, prohíbe lo "ingenioso" (ternarios anidados, one-liners) y prefiere lo explícito a lo breve. No elimina abstracciones útiles | Su lista de "no hacer" como guardarraíl del paso 3 para el coder |
+| [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) (~213k, MIT; es una interpretación de un post de Karpathy, no un texto suyo) | 4 reglas en una pantalla: pensar antes de codear, simplicidad primero, **cambios quirúrgicos** (el código muerto ajeno se menciona, no se borra) y criterio de éxito verificable antes de empezar | "Menciona, no borres" para el coder; "criterio de éxito antes de codear" para el planner |
+| [obra/superpowers](https://github.com/obra/superpowers) (~287k, MIT) | Lluvia de ideas obligatoria con 2–3 enfoques antes de codear, planes con YAGNI explícito y **revisión en dos etapas: primero cumplimiento del plan, después calidad** | Revisión del QA en dos pasadas |
+| [EveryInc/compound-engineering-plugin → `code-simplicity-reviewer`](https://github.com/EveryInc/compound-engineering-plugin) (~25k, MIT) | Revisor final dedicado solo a minimalismo: violaciones de YAGNI, sobreabstracción y redundancia | Separar el checklist de minimalismo del de corrección |
+| [wezendy/elon-musk-algorithm-skills](https://github.com/wezendy/elon-musk-algorithm-skills) (9, MIT) | Una skill por paso con **gate**: no se pasa al siguiente sin cerrar el anterior; cada requisito con originador humano con nombre | El gate por paso y el campo "dueño del requisito" |
 
 **Patrón común de los que funcionan:** reglas **cortas y negativas** ("no X"), ámbito acotado al diff, separar "¿cumple el plan?" de "¿tiene calidad?" y preguntar antes de asumir.
 
-### Cómo se integran al pipeline, en la práctica
+### Reglas integradas al pipeline (2026-09-14)
 
 - **[planner]** Cada requisito lleva **dueño con nombre** y una línea de por qué. Si nadie lo defiende con nombre, va a "a confirmar", no a "a implementar".
 - **[planner]** Antes de agregar, listar qué se puede **quitar o reutilizar**. El plan incluye la sección "Borrado/Reusado" aunque quede vacía, para contrarrestar el sesgo aditivo (*Nature* 2021).

@@ -5,9 +5,9 @@ en orden) y aca se calcula DONDE va cada pixel, midiendo el texto.
 
 Spec de una pagina:
     {
-      "nombre": "3 · Envio de notificacion",
+      "nombre": "3 · Envio de mensajeria",
       "tipo": "secuencia",
-      "titulo": "Envio de notificacion y recuperacion por Outbox",
+      "titulo": "Envio de mensajeria y recuperacion por Outbox",
       "participantes": [
         {"id": "web", "titulo": "web-app", "color": "apoyo"},
         {"id": "ctrl", "titulo": "NotificacionController", "color": "principal"},
@@ -224,11 +224,11 @@ def extension_x(nodo, col, parts, profundidad=0):
 
 # --- emision ---------------------------------------------------------------
 
-def _texto(root, cid, html, x, y, w, h, alinear="center", relleno=True, negrita=False,
+def _texto(root, cid, html, x, y, w, h, alinear="center", fondo=True, negrita=False,
            px=PX_ETIQUETA, extra=""):
     estilo = (f"text;html=1;whiteSpace=wrap;align={alinear};verticalAlign=middle;"
               f"fontSize={px};fontColor={g.TINTA_SUAVE};spacing=0;")
-    if relleno:
+    if fondo:
         estilo += f"labelBackgroundColor={g.PAPEL};"
     if negrita:
         estilo += "fontStyle=1;"
@@ -420,6 +420,6 @@ def construir_secuencia(pagina, indice):
     for cid, puntos, estilo in lineas:
         _linea(root, cid, puntos, estilo)
     # 5) textos al final, encima de las lineas
-    for cid, html, x, yy, w, h, alinear, relleno, negrita, px, *extra in textos:
-        _texto(root, cid, html, x, yy, w, h, alinear, relleno, negrita, px, *extra)
+    for cid, html, x, yy, w, h, alinear, fondo, negrita, px, *extra in textos:
+        _texto(root, cid, html, x, yy, w, h, alinear, fondo, negrita, px, *extra)
     return diagrama

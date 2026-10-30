@@ -1,6 +1,8 @@
 ---
 name: antigravity
 description: "Lo visual con el CLI de Antigravity (Gemini) — como revisor mira cómo se ve el resultado de un diff que toca UI, y como coder hace los cambios de estilo dentro del reparto de un coder por motor."
+tipo: skill
+tags: [harness]
 ---
 <!-- generado por .claude/scripts/generar-skills-codex.py; no editar a mano -->
 

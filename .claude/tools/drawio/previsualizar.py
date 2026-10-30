@@ -234,13 +234,13 @@ def render(nombre, cajas, flechas):
     etiquetas = {c.padre: c for c in cajas if "edgeLabel" in c.estilo}
     cuerpos = [c for c in cajas
                if c.w > 0 and c.h > 0 and "edgeLabel" not in c.estilo]
-    # relleno primero, luego cajas normales
+    # fondo primero, luego cajas normales
     cuerpos.sort(key=lambda c: (0 if c.es_fondo() else 1, c.y))
 
     partes, textos, ys_extra = [], [], []
     for c in cuerpos:
         dibujar_caja(c, partes)
-    # los textos van despues de las flechas: una etiqueta con relleno tapa la
+    # los textos van despues de las flechas: una etiqueta con fondo tapa la
     # linea que la cruza, en vez de quedar tachada
     for c in cuerpos:
         dibujar_texto(c, textos)
@@ -303,7 +303,7 @@ def main():
     arbol = ET.parse(args.archivo)
     base = os.path.splitext(os.path.basename(args.archivo))[0]
     # Por convencion cada diagrama tiene su carpeta, con el .drawio, su
-    # .diagrama.json y sus SVG juntos (pedido del responsable del repo, 2026-09-10). Es el
+    # .diagrama.json y sus SVG juntos (pedido del responsable, 2026-09-10). Es el
     # default para no depender de acordarse del -o.
     carpeta = args.salida or os.path.dirname(os.path.abspath(args.archivo))
     os.makedirs(carpeta, exist_ok=True)
