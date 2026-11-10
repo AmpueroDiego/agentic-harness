@@ -7,8 +7,8 @@
 
 Versión corta. El detalle, el porqué y todo lo demás están en `CLAUDE.md`.
 
-- **Cero eliminaciones.** No borres nada — tarjetas del tablero, comentarios, adjuntos, ramas remotas, código, tablas, documentación — sin instrucción explícita e inequívoca. Antes de cualquier mutación en el tablero de tareas o acción destructiva en Git/BD, propone y espera aprobación expresa.
-- **Todo apunta a `develop`, nunca a `main`.** Ramas desde `develop`, PRs contra `develop`. GitHub propone `main` por defecto: cámbialo a mano.
+- **Cero eliminaciones.** No borres ni archives datos, ramas, código o documentos sin una instrucción específica. Un pedido claro autoriza los pasos rutinarios necesarios; no solicites una aprobación duplicada. Las acciones destructivas requieren autorización explícita.
+- **Las ramas de trabajo parten de la rama base configurada**, normalmente `develop`; los PR apuntan a esa misma rama. Nunca publiques directamente a una rama protegida o principal.
 - **Nada de secretos versionados.** En todo `appsettings*.json` comiteado las claves sensibles van en `""` o `"REPLACE_ME"`. `appsettings.Development.json` nunca se comitea. Y como `""` y `"REPLACE_ME"` son strings no nulos, `??` jamás alcanza el fallback: trata vacío / solo-espacios / `REPLACE_ME` como ausente antes de evaluar.
 - **URLs de servicios hermanos nunca estáticas** — se resuelven en runtime vía `IApiAuthService`.
 - **Ninguna API auto-migra.** Una migración de EF Core no se aplica sola al desplegar, y el fallo es silencioso.

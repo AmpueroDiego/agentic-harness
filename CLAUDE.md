@@ -29,14 +29,16 @@ Bloque de ejemplo — reemplázalo por tus repos. Los agentes asumen un BFF que 
 ## Cero eliminaciones y consentimiento previo
 
 - **NUNCA ELIMINAR NADA** sin instrucción explícita e inequívoca: ni tarjetas del tablero de tareas, comentarios, adjuntos, ramas remotas, código, tablas ni archivos de documentación.
-- **Antes de cualquier mutación en el tablero de tareas** (mover de columna, editar descripciones, asignar miembros, adjuntar) o de cualquier acción destructiva en Git/BD, presenta la propuesta exacta con todos sus campos y espera aprobación expresa.
+- **Una autorización por objetivo:** un pedido explícito, con destino y alcance claros, cubre sus pasos rutinarios necesarios: leer, simular, aplicar y verificar. No vuelvas a pedir aprobación por cada comando. Confirma si falta autorización, cambia el alcance o se propone una acción destructiva. Las eliminaciones y el archivado requieren una instrucción específica.
 
 ## Flujo de trabajo
 
 - **Todo cambio de código pasa por `/orquestar`** (comando en `.claude/commands/`, agentes en `.claude/agents/`), no se edita directo en chat — incluso cambios chicos. Target por defecto `api-core`.
 - **Trabajo en paralelo por olas: `/worktree`.** Una tarjeta = una rama = un worktree en `.worktrees/<repo>--<slug>` = una sesión abierta **en la raíz de AcmeOrg**, que corre `/orquestar --en .worktrees/<repo>--<slug> ...`. Antes del PR, `/worktree sincronizar` (merge de develop + build + tests sobre el código combinado). En ese modo no se sube la rama ni se abre PR hasta que el responsable del repo lo pida.
 - **Cada pedido no trivial se registra en [`TASKS.md`](TASKS.md)** — fecha, repo(s), pedido, estado (🟡 Pendiente / 🔵 En curso / ✅ Hecho / ⏸️ Pausado / ❌ Descartado) y link al run doc o commit. La fila se agrega **al empezar**, no al terminar, para que quede constancia si la sesión se corta.
-- **Entrega en el tablero de tareas y GitHub.** Lo que más se equivoca: el título de una tarjeta existente no se toca; el PR se vincula a la tarjeta por la integración nativa del tablero, sin comentarios redundantes; **la tarjeta pasa a la columna de revisión solo cuando el responsable del repo lo pide**, no al abrir el PR (desde 2026-09-19). **Toda operación sobre el tablero va por una herramienta determinista que simula antes de escribir**, nunca Python suelto contra la API. *(En el original esto era una skill sobre la API de un tablero de tareas concreto, con sus ids reales; se retiró de la versión pública — ver `[tracker]` en `harness.ini.example` para conectar el tuyo.)*
+- **Entrega en el tracker y GitHub.** Conserva el título de tarjetas existentes; vincula el PR con la integración del tracker y no publiques comentarios redundantes. La tarjeta pasa a revisión cuando lo pide el responsable del repositorio, no al abrir el PR. Las operaciones del tracker usan su integración configurada y muestran una simulación antes de escribir. Un pedido de entrega explícito autoriza el commit, push a la rama de trabajo, apertura del PR y verificación de sus resultados, sin aprobaciones repetidas para esos pasos. La automatización nunca publica en la rama principal ni usa force push.
+
+- **Entrega consistente:** agrupa correcciones relacionadas en un lote. Antes de publicarlo, revisa el diff completo, valida lo que aplique y pasa una revisión local sobre el conjunto. Para un PR nuevo terminado, publica la rama y ábrelo listo; usa borrador para avances tempranos. Actualiza un PR en borrador solo con un commit real, marcándolo listo antes del push final. Comprueba que los checks del último SHA terminen aprobados y luego verifica el vínculo con el tracker. Las rondas de revisión que exija el proyecto siguen siendo una puerta aparte; estar listo para CI no autoriza el merge.
 
 ## Playbook
 
