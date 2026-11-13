@@ -296,6 +296,9 @@ class PruebasSecretos(unittest.TestCase):
         bash = shutil.which("bash")
         if not bash:
             self.skipTest("Bash no está disponible")
+        prueba_bash = subprocess.run([bash, "--version"], capture_output=True)
+        if prueba_bash.returncode != 0:
+            self.skipTest("Bash está instalado como alias no funcional")
         self.stage("guia.docx", office("API Key: " + SECRETO))
         # REPOS ya usa separación por espacios en el hook legado: usar '.' desde el repo.
         self.env["GIT_GUARD_REPOS"] = "."

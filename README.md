@@ -1,10 +1,10 @@
 # agentic-harness
 
-> **English summary.** A production-grade multi-agent harness built on top of Claude Code: one orchestrator command (`/orquestar`) coordinates 11 specialised subagents (architect, planner, coder, coder-web, qa, adversary, plus five standalone ones) through fixed, verbatim hand-off contracts. It ships with production controls (bounded retry loops, a mandatory human checkpoint before schema changes, hooks that block dangerous git/PR operations and secrets in the stage, read-only database access through MCP), an Obsidian vault used as long-term memory (ADRs, one run doc per execution, golden tasks for replay), and two self-improvement agents (`retro` proposes prompt edits from run history, `system-auditor` audits the system's own source) that never edit anything without human approval. A portable installer (`install.sh` / `install.ps1`) configures it for any project from a single `harness.ini` (git is the only mandatory integration; tracker, GitHub, Codex/Antigravity/DeepSeek, database MCP servers and the Obsidian vault are all optional and degrade gracefully), and `profiles/` ships example stack conventions (.NET, Node/TS, Python) the coder agents draw on. This is an anonymised copy of a system that processed 175 tasks in production over two months across six repositories; the client, its people and its infrastructure have been replaced by placeholders. MIT licensed.
+> **English summary.** A production-grade multi-agent harness built on top of Claude Code: one orchestrator command (`/orquestar`) coordinates 11 specialised subagents (architect, planner, coder, coder-web, qa, adversary, plus five standalone ones) through fixed, verbatim hand-off contracts. It ships with production controls (bounded retry loops, a mandatory human checkpoint before schema changes, hooks that block dangerous git/PR operations and secrets in the stage, read-only database access through MCP), an Obsidian vault used as long-term memory (ADRs, one run doc per execution, golden tasks for replay), and two self-improvement agents (`retro` proposes prompt edits from run history, `system-auditor` audits the system's own source) that never edit anything without human approval. A portable installer (`install.sh` / `install.ps1`) configures it for any project from a single `harness.ini` (Git is the only required integration; Python 3 is required to activate the security hooks and generate Codex skills. Tracker, GitHub, Codex/Antigravity/DeepSeek, database MCP servers and the Obsidian vault remain optional), and `profiles/` ships example stack conventions (.NET, Node/TS, Python) the coder agents draw on; `.agents/skills/` supplies generated Codex entry points. This is an anonymised copy of a system whose source project reports 175 tasks over two months across six repositories. That historical count has no public task-level outcomes or comparable baseline, so it is not a measured success rate or savings claim. MIT licensed.
 
 Harness multiagente sobre Claude Code, usado en producción para desarrollar y mantener un ecosistema de seis repositorios (.NET 10 + React/TypeScript). Esta es una **versión anonimizada**: el cliente, las personas del equipo, los hosts, los identificadores de tableros y toda la lógica de negocio fueron reemplazados por placeholders (`AcmeOrg`, `api-core`, `<sql-host>`, `Revisor Principal`, etc.) o retirados. Lo que queda es el sistema: cómo se reparte el trabajo, cómo se verifica y cómo aprende.
 
-**Dato real:** 175 tareas procesadas en 2 meses (corridas del orquestador, fixes directos y sesiones de diseño), con registro por corrida, retro periódica y auditorías del propio sistema.
+**Antecedente histórico declarado por el proyecto fuente:** 175 tareas en 2 meses, contando corridas, fixes directos y sesiones de diseño. Esta copia anonimizada no publica los resultados por tarea ni un baseline comparable; no permite calcular éxito, regresiones o ahorro.
 
 ## Qué es
 
@@ -16,7 +16,7 @@ Harness multiagente sobre Claude Code, usado en producción para desarrollar y m
   - Hooks que **bloquean**: `git-guard.sh` (PR sin `--base develop` o contra `main`; secretos en el stage antes de cada `git commit`), `pr-base-guard.py` (mismo control para el MCP de GitHub), `check-file-size.py` / `check-bash-read.py` (lecturas completas de archivos grandes se desvían a un motor barato), `check-maxlength.py` (aviso sobre ids externos truncables). Los secretos los revisa `revisar_secretos.py`, compartido con un `pre-commit` de git real y cubierto por 23 tests.
   - Acceso a base de datos **solo lectura vía MCP**: `settings.json` permite `list_tables`/`describe_table`/`read_query`, pide confirmación para `execute_query`/`write_query` y deniega `drop`/`alter`/`create`. Los agentes declaran en su `tools:` exactamente qué conectores usan.
   - Verificación de primera mano: una cita `archivo:línea` solo vale si sale de un `grep`/`Read` de esa sesión; el orquestador contrasta cada `## Coder Report` contra `git status` antes de creerlo.
-- **Memoria en un vault de Obsidian.** La carpeta es a la vez repo y vault: ADRs (`docs/adr/`), un run doc por corrida con tokens y ciclos (`docs/runs/NNNN-*.md`, indexados por tema en `INDEX.md`), tareas doradas (`GOLDEN-TASKS.md`) para hacer replay de un cambio de prompt antes de confiar en él, y un `pre-commit` que impide dejar notas huérfanas o wikilinks rotos. En esta versión pública esas carpetas viajan vacías; el mecanismo está documentado en `Home.md` y `Meta/`.
+- **Memoria en un vault de Obsidian.** La carpeta es a la vez repo y vault: ADRs (`docs/adr/`), un run doc por corrida con tokens y ciclos (`docs/runs/NNNN-*.md`, indexados por tema en `INDEX.md`), tareas doradas (`golden-tasks.md`) para hacer replay de un cambio de prompt antes de confiar en él, y un `pre-commit` que impide dejar notas huérfanas o wikilinks rotos. Los registros históricos privados se omiten. `docs/runs/golden-tasks.md` publica escenarios anonimizados para repetir una evaluación.
 - **Agentes que mejoran el sistema, con aprobación humana.** `retro` lee los run docs, busca la misma corrección repetida en 2+ corridas y propone el texto exacto a cambiar en el `.md` del agente (nunca lo aplica: no tiene `Write`). `system-auditor` lee el fuente del sistema —instrucciones que el `tools:` de un agente no puede ejecutar, plantillas que divergieron, conteos desfasados, loops sin tope— y propone correcciones. Ninguno toca el control de flujo (topes, checkpoints) sin marcarlo como decisión mayor.
 - **Tres motores.** Claude orquesta y hace la lógica con estado; Codex CLI revisa antes del push y ejecuta trabajo mecánico de un archivo; Antigravity CLI (Gemini) revisa lo visual y hace cambios de estilo. Cada hallazgo externo se verifica contra el código antes de convertirse en trabajo.
 
@@ -49,7 +49,8 @@ Agentes independientes, fuera del pipeline: `analyst` (preguntas de datos, solo 
 ├── hooks/         guardas PreToolUse/PostToolUse + revisar_secretos.py y sus tests
 ├── scripts/       shunt: bulk-read, code-write, gh-read-shunt
 ├── tools/         scripts deterministas sin dependencias: drawio/, vault/
-├── settings.json  permisos (allow / ask / deny) y hooks del proyecto
+├── settings.json  permisos y registro de hooks activos del proyecto
+├── workflows/     workflows invocados por el orquestador
 └── launch.json    ejemplo de configuraciones de arranque del frontend
 .agents/skills/security/   catálogo CWE/OWASP que carga la revisión de seguridad
 docs/guias/                playbook anti-regresiones, principios minimalistas, detección de code smells (genéricos)
@@ -76,11 +77,12 @@ nada, y `-NonInteractive`/`--non-interactive` para correr sin preguntas
 (usa `harness.ini.example` tal cual, o el que le pases con `--ini`).
 
 El instalador:
-1. Detecta qué tenés instalado (`git`, `gh`, `node`, `dotnet`, `python`, `claude`, `codex`, `agy`) — nada de esto es obligatorio salvo `git`.
+1. Detecta qué tenés instalado. Git y Python 3 son necesarios para la instalación completa; el resto de motores e integraciones son opcionales.
 2. Genera (o reutiliza) `harness.ini` en tu proyecto — nunca se versiona, ver `harness.ini.example` para el formato y qué es obligatorio vs. opcional.
-3. Copia `agents/`, `commands/`, `hooks/`, `scripts/`, `tools/` y `profiles/` a `.claude/` de tu proyecto, y `CLAUDE.md`/`AGENTS.md` a su raíz, con `AcmeOrg` ya sustituido por el nombre de tu proyecto (y la rama base, si no es `develop`). Un archivo existente y distinto se respalda a `.bak` en vez de perderse.
+3. Genera y copia `.agents/skills/`; copia `agents/`, `commands/`, `hooks/`, `scripts/`, `tools/`, `workflows/` y `profiles/` a `.claude/` de tu proyecto, y `CLAUDE.md`/`AGENTS.md` a su raíz, con `AcmeOrg` ya sustituido por el nombre de tu proyecto (y la rama base, si no es `develop`). Un archivo existente y distinto se respalda a `.bak` en vez de perderse.
 4. Instala un hook de `pre-commit` que revisa secretos antes de cada commit (`core.hooksPath` apunta a `.claude/hooks-git/`), salvo `--skip-hook` o si el destino ya tenía otro hook configurado.
-5. Termina con un **doctor**: qué quedó activo y qué se omitió (tracker, motores, MCP de base de datos, vault).
+5. Fusiona de forma idempotente los hooks requeridos en el `settings.json` existente, preserva los permisos del proyecto y configura la base desde `[git] base_branch`.
+6. Termina con un **doctor**: qué quedó activo y qué se omitió (hooks, skills, tracker, motores, MCP de base de datos, vault).
 
 Es idempotente (correr dos veces no cambia nada de más) y no destructivo
 (nunca sobrescribe sin backup, salvo `--force`). Después de instalar, quedan
@@ -88,7 +90,7 @@ tres cosas manuales que el instalador no adivina por vos:
 - **Los nombres reales de tus repos.** Los placeholders son `api-core`, `api-contracts`, `api-people`, `api-auth`, `api-delivery`, `web-app`; un `grep -rl api-core .claude` te da los puntos de contacto. Los roles (BFF, IdP, frontend) sí importan: `coder` trae de ejemplo convenciones .NET/EF Core y `coder-web` React/TypeScript.
 - **Pegar el perfil de stack elegido dentro del agente.** El instalador copia `profiles/` a `.claude/profiles/` como referencia, pero **no** inyecta su contenido en la sección "Stack real" de `coder`/`coder-web` — eso hoy es un paso manual (copiar/pegar el `.md` del perfil que corresponda). Ver "Perfiles de stack" abajo.
 - **La sección "Visión de dominio" de `CLAUDE.md`.** Los seis agentes del pipeline la leen antes de diseñar; llega vacía a propósito — es lo único que de verdad no se puede genérica.
-- **Vaciar y empezar a llenar la memoria**, si vas a usar el vault de Obsidian: `docs/runs/INDEX.md`, `RETRO-LOG.md`, `GOLDEN-TASKS.md`, `docs/adr/`. El Step 5 de `/orquestar` escribe el run doc; corré `retro` cada 3-5 corridas y `system-auditor` cada ~10.
+- **La memoria histórica privada se omite.** Usa `docs/runs/golden-tasks.md` para el replay público; el Step 5 de `/orquestar` escribe run docs nuevos.
 
 Detalles que conviene leer primero: `Meta/sistema-multiagente-supervisado.md` (por qué existe cada capa y qué pasó sin ella) y `.claude/commands/orquestar.md` (el protocolo completo, paso por paso).
 
@@ -142,3 +144,10 @@ Es una copia anonimizada de un sistema en uso. Se retiraron: el contexto de nego
 ## Licencia
 
 MIT. Ver [LICENSE](LICENSE). © 2026 Diego Ampuero.
+
+
+## Evaluación reproducible
+
+- CI versionado en `.github/workflows/ci.yml` valida hooks, skills, instaladores y fixtures en Linux y Windows.
+- `docs/runs/golden-tasks.md` y `docs/runs/golden-tasks.json` publican tareas y criterios; `python scripts/replay_golden_tasks.py` prepara los prompts para repetirlas. El runner no invoca ni puntúa un modelo: registra resultados, modelo, SHA, tokens y duración siguiendo el protocolo del documento.
+- La cifra histórica de 175 tareas es antecedente del proyecto fuente, no evidencia pública de tasa de éxito, regresiones o ahorro.

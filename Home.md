@@ -8,7 +8,7 @@ tags: [dashboard, meta]
 > Vault a nivel de `AcmeOrg/`, cubre los repos de código hermanos (`api-core`, `api-contracts`, `api-people`, `api-auth`, `api-delivery`, `web-app`) y el pipeline multiagente en un solo lugar. Requiere el plugin **Dataview** (Settings → Community plugins → Dataview) — las tablas se generan solas leyendo el frontmatter de cada nota, no hace falta mantenerlas a mano.
 >
 > 🌟 **Arquitectura Central:** [[Meta/sistema-multiagente-supervisado|🤖 Sistema Multiagente Supervisado]]
-> 📋 **Control de Tareas y Memoria:** `TASKS.md` (backlog) · `docs/runs/INDEX.md` (historial de corridas) · `docs/runs/RETRO-LOG.md` (bitácora de mejora continua)
+> 📋 **Control de Tareas y Memoria:** `TASKS.md` (backlog) · `docs/runs/index.md` (historial de corridas) · `docs/runs/RETRO-LOG.md` (bitácora de mejora continua)
 > 🛡️ **Gobernanza:** catálogo de ADRs en `docs/adr/` · contexto de dominio en `contexto-negocio/` · [[Meta/Graph-View-Config|🎨 Graph View Config]]
 
 ## Agentes (`.claude/agents`)
@@ -116,3 +116,9 @@ SORT fecha DESC
 - [[.claude/commands/trello|Conector del tablero]]
 - [[.claude/skills/antislop-code/SKILL|Revisión de mantenibilidad]]
 - [[.claude/tools/supercodex/bitacora-mejoras-codex|Bitácora de mejoras de revisión]]
+
+
+## Evaluación pública del harness
+
+- [[docs/runs/golden-tasks|Tareas doradas para replay]]
+- [[docs/runs/index|Índice de evaluaciones]]

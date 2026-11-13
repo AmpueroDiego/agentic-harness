@@ -165,6 +165,20 @@ done
 cp "$SOURCE/CLAUDE.md" "$STAGE/CLAUDE.md"; sustituir_placeholders "$STAGE/CLAUDE.md"
 cp "$SOURCE/AGENTS.md" "$STAGE/AGENTS.md"; sustituir_placeholders "$STAGE/AGENTS.md"
 
+PYTHON_CMD=""
+for C in python3 python py; do
+    if command -v "$C" >/dev/null 2>&1 && "$C" -c 'import sys; sys.exit(sys.version_info[0] != 3)' >/dev/null 2>&1; then PYTHON_CMD="$C"; break; fi
+done
+if [ -z "$PYTHON_CMD" ]; then
+    echo "Python 3 es necesario para activar las guardas y generar los skills de Codex." >&2
+    exit 1
+fi
+if [ "$DRY_RUN" -eq 1 ]; then
+    log "  [dry-run] regenerar .agents/skills desde comandos y skills Claude"
+else
+    "$PYTHON_CMD" "$SOURCE/.claude/scripts/generar-skills-codex.py"
+fi
+
 step "3/6 — Copiando agentes, comandos, hooks y scripts (con placeholders ya resueltos)"
 copiar_arbol() {
     origen="$1"; destino="$2"
@@ -183,6 +197,8 @@ copiar_arbol() {
 }
 copiar_arbol "$STAGE/.claude/agents"    "$TARGET/.claude/agents"
 copiar_arbol "$STAGE/.claude/commands"  "$TARGET/.claude/commands"
+copiar_arbol "$SOURCE/.claude/workflows" "$TARGET/.claude/workflows"
+copiar_arbol "$SOURCE/.agents/skills"     "$TARGET/.agents/skills"
 copiar_arbol "$SOURCE/.claude/hooks"    "$TARGET/.claude/hooks"
 copiar_arbol "$SOURCE/.claude/scripts"  "$TARGET/.claude/scripts"
 copiar_arbol "$SOURCE/.claude/tools"    "$TARGET/.claude/tools"
@@ -196,8 +212,10 @@ for f in CLAUDE.md AGENTS.md; do
     fi
     run "cp \"$STAGE/$f\" \"$TARGET/$f\""
 done
-if [ -f "$SOURCE/.claude/settings.json" ] && [ ! -f "$TARGET/.claude/settings.json" ]; then
-    run "cp \"$SOURCE/.claude/settings.json\" \"$TARGET/.claude/settings.json\""
+if [ "$DRY_RUN" -eq 1 ]; then
+    log "  [dry-run] fusionar hooks en .claude/settings.json (base=$BASE_BRANCH)"
+else
+    "$PYTHON_CMD" "$TARGET/.claude/scripts/configurar-claude-settings.py" --template "$SOURCE/.claude/settings.json" --target "$TARGET/.claude/settings.json" --base-branch "$BASE_BRANCH"
 fi
 log "  Placeholders resueltos: AcmeOrg -> $PROYECTO$( [ "$BASE_BRANCH" != "develop" ] && echo ", \`develop\` -> \`$BASE_BRANCH\`" )."
 log "  Revisá a mano los nombres de repo (api-core, web-app, ...): el instalador no adivina"
@@ -244,6 +262,8 @@ cat <<EOF
   MCP de base de datos: ${DB_MCP:-"(ninguno declarado)"}
   Vault Obsidian:       $(estado vault "$VAULT_ON")
   Hook de secretos:     $([ "$SKIP_HOOK" -eq 1 ] && echo "omitido (--skip-hook)" || echo "ver paso 5/6 arriba")
+  Claude hooks:         activo (git-guard, PR base, lectura acotada, telemetria)
+  Skills Codex:         activo (.agents/skills)
 
 Próximos pasos:
   1. Editá $INI_DESTINO con tus repos reales bajo [repo:<nombre>].

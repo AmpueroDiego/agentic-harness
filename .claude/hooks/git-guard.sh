@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # PreToolUse(Bash) — convierte en bloqueo dos reglas de CLAUDE.md que hasta ahora
 # eran solo texto:
-#   1. Los PRs van contra `develop`, nunca main/qa/master.
+#   1. Los PRs van contra la rama configurada en AGENTIC_BASE_BRANCH.
 #   2. Ningun appsettings*.json se comitea con un valor real en clave sensible.
 # exit 2 = accion bloqueada, stderr vuelve al agente. exit 0 = pasa.
 set -u
@@ -48,27 +48,21 @@ else
 fi
 
 # ---------- Regla 1: base del PR ----------
+BASE_CONFIGURADA="${AGENTIC_BASE_BRANCH:-develop}"
 if echo "$CMD" | grep -qE '\bgh[[:space:]]+pr[[:space:]]+create\b'; then
-  TIENE_DEVELOP=$(git -C "${CLAUDE_PROJECT_DIR:-$PWD}" ls-remote --heads origin develop 2>/dev/null | head -1)
-  # Repos personales del responsable (origin en <org>/): su flujo es develop -> main, sin qa
-  # (2026-10-10, un proyecto personal). AcmeOrg y el resto siguen bloqueados contra main/master/qa.
-  PERSONAL_OWNER="${GIT_GUARD_PERSONAL_OWNER:-<org>}"
-  PERSONAL=""
-  case "$(git -C "${CLAUDE_PROJECT_DIR:-$PWD}" remote get-url origin 2>/dev/null)" in
-    *github.com[:/]"$PERSONAL_OWNER"/*) PERSONAL=1 ;;
-  esac
-  if [ -z "$PERSONAL" ] && echo "$CMD" | grep -qE '(--base|-B)[[:space:]=]+"?(main|master|qa)($|[^a-zA-Z0-9_-])'; then
-    echo "BLOQUEADO por git-guard.sh - PR contra main/master/qa." >&2
-    echo "El flujo es develop -> qa -> main. Usa: --base develop" >&2
+  BASE_SOLICITADA=$(printf '%s' "$CMD" | "$PY" -c 'import shlex,sys
+a=shlex.split(sys.stdin.read()); b=""
+for i,x in enumerate(a):
+ if x in ("--base","-B") and i+1<len(a): b=a[i+1]; break
+ if x.startswith("--base="): b=x.split("=",1)[1]; break
+print(b)')
+  if [ -z "$BASE_SOLICITADA" ]; then
+    echo "BLOQUEADO por git-guard.sh: gh pr create requiere --base." >&2
+    echo "Pasa --base $BASE_CONFIGURADA (según harness.ini [git] base_branch)." >&2
     exit 2
   fi
-  if ! echo "$CMD" | grep -qE '(--base|-B)[[:space:]=]'; then
-    echo "BLOQUEADO por git-guard.sh - 'gh pr create' sin --base." >&2
-    if [ -n "$TIENE_DEVELOP" ]; then
-      echo "Este repo tiene rama develop y el default de GitHub puede ser main. Pasa --base develop." >&2
-    else
-      echo "Este repo no tiene rama develop; pasa --base explicito para no depender del default." >&2
-    fi
+  if [ "$BASE_SOLICITADA" != "$BASE_CONFIGURADA" ]; then
+    echo "BLOQUEADO por git-guard.sh: base=$BASE_SOLICITADA; la rama configurada es $BASE_CONFIGURADA." >&2
     exit 2
   fi
 fi

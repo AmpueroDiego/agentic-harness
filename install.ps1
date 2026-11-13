@@ -162,6 +162,13 @@ Convert-Placeholders (Join-Path $Stage "CLAUDE.md")
 Copy-Item (Join-Path $Source "AGENTS.md") (Join-Path $Stage "AGENTS.md") -Force
 Convert-Placeholders (Join-Path $Stage "AGENTS.md")
 
+$python = Get-Command python -ErrorAction SilentlyContinue
+if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
+if (-not $python) { Write-Error "Python 3 es necesario para activar las guardas y generar los skills de Codex." }
+$version = & $python.Source -c "import sys; print(sys.version_info[0])" 2>$null
+if ($version -ne "3") { Write-Error "Python 3 es necesario para activar las guardas y generar los skills de Codex." }
+Invoke-Maybe { & $python.Source (Join-Path $Source ".claude\scripts\generar-skills-codex.py") } "regenerar skills de Codex"
+
 Write-Step "3/6 - Copiando agentes, comandos, hooks y scripts (con placeholders ya resueltos)"
 function Copy-Tree([string]$OrigenDir, [string]$DestinoDir) {
     if (-not (Test-Path $OrigenDir)) { return }
@@ -184,6 +191,8 @@ function Copy-Tree([string]$OrigenDir, [string]$DestinoDir) {
 }
 Copy-Tree (Join-Path $Stage ".claude\agents")    (Join-Path $Target ".claude\agents")
 Copy-Tree (Join-Path $Stage ".claude\commands")  (Join-Path $Target ".claude\commands")
+Copy-Tree (Join-Path $Source ".claude\workflows") (Join-Path $Target ".claude\workflows")
+Copy-Tree (Join-Path $Source ".agents\skills")      (Join-Path $Target ".agents\skills")
 Copy-Tree (Join-Path $Source ".claude\hooks")    (Join-Path $Target ".claude\hooks")
 Copy-Tree (Join-Path $Source ".claude\scripts")  (Join-Path $Target ".claude\scripts")
 Copy-Tree (Join-Path $Source ".claude\tools")    (Join-Path $Target ".claude\tools")
@@ -204,10 +213,9 @@ foreach ($f in @("CLAUDE.md", "AGENTS.md")) {
     Invoke-Maybe { Copy-Item $src $dst -Force } "copiar $f"
 }
 $settingsDst = Join-Path $Target ".claude\settings.json"
-if (-not (Test-Path $settingsDst)) {
-    Invoke-Maybe { Copy-Item (Join-Path $Source ".claude\settings.json") $settingsDst -Force } "copiar settings.json"
-}
-Write-Log "  Placeholders resueltos: AcmeOrg -> $Proyecto$(if ($BaseBranch -ne 'develop') { \", ``develop`` -> ``$BaseBranch``\" })."
+Invoke-Maybe { & $python.Source (Join-Path $Target ".claude\scripts\configurar-claude-settings.py") --template (Join-Path $Source ".claude\settings.json") --target $settingsDst --base-branch $BaseBranch } "fusionar hooks de Claude (base=$BaseBranch)"
+Write-Log "  Placeholder resuelto: AcmeOrg -> $Proyecto"
+if ($BaseBranch -ne "develop") { Write-Log "  Rama base resuelta: develop -> $BaseBranch" }
 Write-Log "  Revisa a mano los nombres de repo (api-core, web-app, ...): el instalador no"
 Write-Log "  adivina los tuyos - edita CLAUDE.md y los agentes con los nombres reales de tus repos."
 Remove-Item -Recurse -Force $Stage -ErrorAction SilentlyContinue
@@ -254,6 +262,8 @@ Write-Host "  Antigravity CLI:     $(Estado $AntigravityOn)"
 Write-Host "  MCP de base de datos: $(if ($DbMcp) { $DbMcp } else { '(ninguno declarado)' })"
 Write-Host "  Vault Obsidian:      $(Estado $VaultOn)"
 Write-Host "  Hook de secretos:    $(if ($SkipHook) { 'omitido (-SkipHook)' } else { 'ver paso 5/6 arriba' })"
+Write-Host "  Claude hooks:        activo (git-guard, base PR, lectura acotada, telemetria)"
+Write-Host "  Skills Codex:        activo (.agents/skills)"
 Write-Host ""
 Write-Host "Proximos pasos:"
 Write-Host "  1. Edita $IniDestino con tus repos reales bajo [repo:<nombre>]."
