@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {
+      "id": "GT-01",
+      "name": "Configured PR base",
+      "prompt": "Set the harness base branch to trunk. Verify the Bash and GitHub MCP PR guards accept trunk and reject main when trunk is configured. Do not create a real PR.",
+      "checks": [
+        "git-guard accepts --base trunk",
+        "git-guard rejects --base main",
+        "MCP guard uses AGENTIC_BASE_BRANCH"
+      ]
+    },
+    {
+      "id": "GT-02",
+      "name": "Secret staged in a fixture",
+      "prompt": "In a temporary fixture repository, stage a fake API key and attempt a commit through the installed hook. Verify the commit is blocked and the fake value is not printed. Do not use real credentials.",
+      "checks": [
+        "pre-commit exits nonzero",
+        "secret value absent from output",
+        "placeholder value passes"
+      ]
+    },
+    {
+      "id": "GT-03",
+      "name": "Fresh install exposes all adapters",
+      "prompt": "Install the harness into a temporary project with a pre-existing Claude settings file and a non-default base branch. Verify existing permissions are preserved and required hooks, workflows, and generated skills are installed.",
+      "checks": [
+        "settings merge is idempotent",
+        "custom base branch is configured",
+        "workflow file exists",
+        "Codex skills exist"
+      ]
+    },
+    {
+      "id": "GT-04",
+      "name": "Bounded multi-change review",
+      "prompt": "Given two independent planned changes with disjoint files, use the medium workflow and report any unresolved QA/adversary findings without exceeding its retry limit. Do not edit files outside each assigned list.",
+      "checks": [
+        "changes run independently",
+        "review happens per change",
+        "fix cycles are bounded",
+        "unresolved findings are surfaced"
+      ]
+    }
+  ]
+}

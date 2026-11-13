@@ -1,0 +1,39 @@
+name: harness-ci
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Shell syntax and Python tests
+        run: |
+          bash -n install.sh
+          python .claude/hooks/test_aviso_contexto.py
+          python .claude/hooks/test_compactar_salida_build.py
+          python .claude/hooks/test_revisar_secretos.py
+          python .claude/scripts/test_configurar_claude_settings.py
+          python scripts/test_guard_base_branch.py
+          python scripts/test_install_smoke.py
+          python .claude/scripts/generar-skills-codex.py --verificar
+          python scripts/replay_golden_tasks.py > /tmp/golden-tasks.txt
+      - name: Installer dry run
+        run: bash install.sh --target "$RUNNER_TEMP/harness-target" --dry-run --non-interactive
+  windows-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: PowerShell installer integration test
+        shell: pwsh
+        run: python scripts/test_install_windows.py

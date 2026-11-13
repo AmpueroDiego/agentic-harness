@@ -18,14 +18,15 @@ def correr(lineas, umbral="200"):
     return r
 
 
-def llamada(leido, lateral=False):
+def llamada(leido, lateral=False, texto=""):
     return {"type": "assistant", "isSidechain": lateral,
-            "message": {"usage": {"input_tokens": 10, "cache_creation_input_tokens": 1000, "cache_read_input_tokens": leido}}}
+            "message": {"content": ([{"type": "text", "text": texto}] if texto else []),
+                        "usage": {"input_tokens": 10, "cache_creation_input_tokens": 1000, "cache_read_input_tokens": leido}}}
 
 
 casos = [
     ("bajo el umbral no avisa", [llamada(100_000)], "", 0),
-    ("sobre el umbral avisa", [llamada(250_000)], "251K", 0),
+    ("sobre el umbral y con señal de cierre avisa", [llamada(250_000, texto="trabajo cerrado")], "251K", 0),
     ("mira la última llamada, no la mayor", [llamada(300_000), llamada(50_000)], "", 0),
     ("ignora subagentes", [llamada(50_000), llamada(900_000, lateral=True)], "", 0),
     ("transcript vacío no falla", [], "", 0),
