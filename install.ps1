@@ -191,6 +191,17 @@ function Copy-Tree([string]$OrigenDir, [string]$DestinoDir) {
 }
 Copy-Tree (Join-Path $Stage ".claude\agents")    (Join-Path $Target ".claude\agents")
 Copy-Tree (Join-Path $Stage ".claude\commands")  (Join-Path $Target ".claude\commands")
+Copy-Tree (Join-Path $Source ".claude\skills")    (Join-Path $Target ".claude\skills")
+$connectorsSrc = Join-Path $Source ".claude\CONNECTORS.md"
+$connectorsDst = Join-Path $Target ".claude\CONNECTORS.md"
+if (Test-Path $connectorsSrc) {
+    if ((Test-Path $connectorsDst) -and -not $Force) {
+        $e = Get-FileHash $connectorsDst -ErrorAction SilentlyContinue
+        $n = Get-FileHash $connectorsSrc -ErrorAction SilentlyContinue
+        if ($e.Hash -ne $n.Hash) { Invoke-Maybe { Copy-Item $connectorsDst "$connectorsDst.bak" -Force } "respaldar $connectorsDst" }
+    }
+    Invoke-Maybe { New-Item -ItemType Directory -Force -Path (Split-Path $connectorsDst) | Out-Null; Copy-Item $connectorsSrc $connectorsDst -Force } "copiar guía de conectores"
+}
 Copy-Tree (Join-Path $Source ".claude\workflows") (Join-Path $Target ".claude\workflows")
 Copy-Tree (Join-Path $Source ".agents\skills")      (Join-Path $Target ".agents\skills")
 Copy-Tree (Join-Path $Source ".claude\hooks")    (Join-Path $Target ".claude\hooks")
