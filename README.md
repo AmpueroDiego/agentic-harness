@@ -79,7 +79,7 @@ nada, y `-NonInteractive`/`--non-interactive` para correr sin preguntas
 El instalador:
 1. Detecta qué tenés instalado. Git y Python 3 son necesarios para la instalación completa; el resto de motores e integraciones son opcionales.
 2. Genera (o reutiliza) `harness.ini` en tu proyecto — nunca se versiona, ver `harness.ini.example` para el formato y qué es obligatorio vs. opcional.
-3. Genera y copia `.agents/skills/`; copia `agents/`, `commands/`, `hooks/`, `scripts/`, `tools/`, `workflows/` y `profiles/` a `.claude/` de tu proyecto, y `CLAUDE.md`/`AGENTS.md` a su raíz, con `AcmeOrg` ya sustituido por el nombre de tu proyecto (y la rama base, si no es `develop`). Un archivo existente y distinto se respalda a `.bak` en vez de perderse.
+3. Genera y copia `.agents/skills/`; copia `agents/`, `commands/`, `skills/`, `hooks/`, `scripts/`, `tools/`, `workflows/` y `profiles/` a `.claude/` de tu proyecto, y `CLAUDE.md`/`AGENTS.md` a su raíz, con `AcmeOrg` ya sustituido por el nombre de tu proyecto (y la rama base, si no es `develop`). Un archivo existente y distinto se respalda a `.bak` en vez de perderse.
 4. Instala un hook de `pre-commit` que revisa secretos antes de cada commit (`core.hooksPath` apunta a `.claude/hooks-git/`), salvo `--skip-hook` o si el destino ya tenía otro hook configurado.
 5. Fusiona de forma idempotente los hooks requeridos en el `settings.json` existente, preserva los permisos del proyecto y configura la base desde `[git] base_branch`.
 6. Termina con un **doctor**: qué quedó activo y qué se omitió (hooks, skills, tracker, motores, MCP de base de datos, vault).
@@ -151,3 +151,9 @@ MIT. Ver [LICENSE](LICENSE). © 2026 Diego Ampuero.
 - CI versionado en `.github/workflows/ci.yml` valida hooks, skills, instaladores y fixtures en Linux y Windows.
 - `docs/runs/golden-tasks.md` y `docs/runs/golden-tasks.json` publican tareas y criterios; `python scripts/replay_golden_tasks.py` prepara los prompts para repetirlas. El runner no invoca ni puntúa un modelo: registra resultados, modelo, SHA, tokens y duración siguiendo el protocolo del documento.
 - La cifra histórica de 175 tareas es antecedente del proyecto fuente, no evidencia pública de tasa de éxito, regresiones o ahorro.
+
+## Skills de UX/UI y diseño
+
+El instalador copia las skills fuente desde `.claude/skills/` y genera sus punteros Codex en `.agents/skills/`. Incluyen auditoría de accesibilidad, crítica de diseño, handoff, sistema de diseño, investigación de usuarios y UX copy, además de skills propias del harness para CRM, paletas, dirección visual, convertir una referencia visual en interfaz y revisar el resultado renderizado.
+
+Las skills de Anthropic se conservan con su licencia Apache-2.0 y atribución en `.claude/skills/_third-party/`. `image-to-code` y `design-qa` son versiones originales del harness; el texto del plugin propietario Product Design de OpenAI no se redistribuye.

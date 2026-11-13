@@ -197,6 +197,15 @@ copiar_arbol() {
 }
 copiar_arbol "$STAGE/.claude/agents"    "$TARGET/.claude/agents"
 copiar_arbol "$STAGE/.claude/commands"  "$TARGET/.claude/commands"
+copiar_arbol "$SOURCE/.claude/skills" "$TARGET/.claude/skills"
+if [ -f "$SOURCE/.claude/CONNECTORS.md" ]; then
+    if [ -f "$TARGET/.claude/CONNECTORS.md" ] && [ "$FORCE" -ne 1 ] && ! cmp -s "$SOURCE/.claude/CONNECTORS.md" "$TARGET/.claude/CONNECTORS.md" 2>/dev/null; then
+        run "cp \"$TARGET/.claude/CONNECTORS.md\" \"$TARGET/.claude/CONNECTORS.md.bak\""
+        log "    (respaldado .claude/CONNECTORS.md -> CONNECTORS.md.bak, contenido distinto)"
+    fi
+    run "mkdir -p \"$TARGET/.claude\""
+    run "cp \"$SOURCE/.claude/CONNECTORS.md\" \"$TARGET/.claude/CONNECTORS.md\""
+fi
 copiar_arbol "$SOURCE/.claude/workflows" "$TARGET/.claude/workflows"
 copiar_arbol "$SOURCE/.agents/skills"     "$TARGET/.agents/skills"
 copiar_arbol "$SOURCE/.claude/hooks"    "$TARGET/.claude/hooks"
