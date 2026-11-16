@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Configuración local de Claude Code: lleva rutas de la máquina
+.claude/
+
+# Los casos son datos, no sistema. Cada quien captura los suyos, y una
+# reproducción contiene la información de negocio del cliente: precios,
+# márgenes, avatar. El repo comparte las herramientas, no el trabajo hecho.
+casos/*/
+!casos/_PLANTILLA.md
+
+# El índice se genera leyendo el disco: siempre reflejaría los casos locales.
+# Se regenera solo con `python tools/run.py indice`.
+casos/README.md

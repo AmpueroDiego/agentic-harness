@@ -1,0 +1,19 @@
+{
+    "description":  "Workspace-local safety checks for Bash commands; review and trust this exact hook before use.",
+    "hooks":  {
+                  "PreToolUse":  [
+                                     {
+                                         "matcher":  "^Bash$",
+                                         "hooks":  [
+                                                       {
+                                                           "type":  "command",
+                                                           "command":  "node \".codex/hooks/pre_tool_use_guard.cjs\"",
+                                                           "commandWindows":  "node \".codex/hooks/pre_tool_use_guard.cjs\"",
+                                                           "statusMessage":  "Checking workspace safety",
+                                                           "timeout":  10
+                                                       }
+                                                   ]
+                                     }
+                                 ]
+              }
+}

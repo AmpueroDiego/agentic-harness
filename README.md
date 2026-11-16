@@ -1,159 +1,89 @@
-# agentic-harness
+---
+tipo: indice
+tags: [harness, codex, onboarding]
+---
 
-> **English summary.** A production-grade multi-agent harness built on top of Claude Code: one orchestrator command (`/orquestar`) coordinates 11 specialised subagents (architect, planner, coder, coder-web, qa, adversary, plus five standalone ones) through fixed, verbatim hand-off contracts. It ships with production controls (bounded retry loops, a mandatory human checkpoint before schema changes, hooks that block dangerous git/PR operations and secrets in the stage, read-only database access through MCP), an Obsidian vault used as long-term memory (ADRs, one run doc per execution, golden tasks for replay), and two self-improvement agents (`retro` proposes prompt edits from run history, `system-auditor` audits the system's own source) that never edit anything without human approval. A portable installer (`install.sh` / `install.ps1`) configures it for any project from a single `harness.ini` (Git is the only required integration; Python 3 is required to activate the security hooks and generate Codex skills. Tracker, GitHub, Codex/Antigravity/DeepSeek, database MCP servers and the Obsidian vault remain optional), and `profiles/` ships example stack conventions (.NET, Node/TS, Python) the coder agents draw on; `.agents/skills/` supplies generated Codex entry points. This is an anonymised copy of a system whose source project reports 175 tasks over two months across six repositories. That historical count has no public task-level outcomes or comparable baseline, so it is not a measured success rate or savings claim. MIT licensed.
+# Llama Agentic Harness
 
-Harness multiagente sobre Claude Code, usado en producción para desarrollar y mantener un ecosistema de seis repositorios (.NET 10 + React/TypeScript). Esta es una **versión anonimizada**: el cliente, las personas del equipo, los hosts, los identificadores de tableros y toda la lógica de negocio fueron reemplazados por placeholders (`AcmeOrg`, `api-core`, `<sql-host>`, `Revisor Principal`, etc.) o retirados. Lo que queda es el sistema: cómo se reparte el trabajo, cómo se verifica y cómo aprende.
+Versión propuesta: **2.0.0**. Consulta [VERSION](VERSION).
 
-**Antecedente histórico declarado por el proyecto fuente:** 175 tareas en 2 meses, contando corridas, fixes directos y sesiones de diseño. Esta copia anonimizada no publica los resultados por tarea ni un baseline comparable; no permite calcular éxito, regresiones o ahorro.
+Sistema de trabajo para Codex con agentes especializados, revisiones, controles y memoria en Markdown.
 
-## Qué es
+El agente principal dirige el trabajo y comprueba los resultados.
+Cada proyecto conserva sus instrucciones, código y decisiones.
 
-- **Un orquestador y 11 subagentes.** El orquestador (`/orquestar`) nunca deja que dos agentes se hablen entre sí: cada salida es una plantilla markdown fija (`## Architect Report`, `## Plan`, `## Coder Report`, `## QA Verdict`, `## Adversarial Audit Report`) que se pasa **verbatim** al siguiente. Un hand-off malformado es un hallazgo, no algo que el orquestador arregla en silencio.
-- **Flujo rápido vs. pipeline completo.** Tres niveles: *Nivel 0* (el orquestador edita directo con build verde: un literal, una etiqueta), *Nivel 1* (sin `architect`; el patrón ya está en el archivo que se toca) y *pipeline completo* (obligatorio para endpoints nuevos, esquema, auth, concurrencia). Cuando hay duda, se escala.
-- **Controles de producción.**
-  - Topes de reintento: 2 ciclos QA→coder→QA, 1 ronda `adversary`→coder→`adversary`, cada uno con su presupuesto; al agotarse se escala al humano en vez de seguir iterando.
-  - Parada obligatoria (Step 2.5) cuando el plan marca escritura a bases ajenas, cambio de esquema, desvío de un ADR o una decisión de negocio bloqueante.
-  - Hooks que **bloquean**: `git-guard.sh` (PR sin `--base develop` o contra `main`; secretos en el stage antes de cada `git commit`), `pr-base-guard.py` (mismo control para el MCP de GitHub), `check-file-size.py` / `check-bash-read.py` (lecturas completas de archivos grandes se desvían a un motor barato), `check-maxlength.py` (aviso sobre ids externos truncables). Los secretos los revisa `revisar_secretos.py`, compartido con un `pre-commit` de git real y cubierto por 23 tests.
-  - Acceso a base de datos **solo lectura vía MCP**: `settings.json` permite `list_tables`/`describe_table`/`read_query`, pide confirmación para `execute_query`/`write_query` y deniega `drop`/`alter`/`create`. Los agentes declaran en su `tools:` exactamente qué conectores usan.
-  - Verificación de primera mano: una cita `archivo:línea` solo vale si sale de un `grep`/`Read` de esa sesión; el orquestador contrasta cada `## Coder Report` contra `git status` antes de creerlo.
-- **Memoria en un vault de Obsidian.** La carpeta es a la vez repo y vault: ADRs (`docs/adr/`), un run doc por corrida con tokens y ciclos (`docs/runs/NNNN-*.md`, indexados por tema en `INDEX.md`), tareas doradas (`golden-tasks.md`) para hacer replay de un cambio de prompt antes de confiar en él, y un `pre-commit` que impide dejar notas huérfanas o wikilinks rotos. Los registros históricos privados se omiten. `docs/runs/golden-tasks.md` publica escenarios anonimizados para repetir una evaluación.
-- **Agentes que mejoran el sistema, con aprobación humana.** `retro` lee los run docs, busca la misma corrección repetida en 2+ corridas y propone el texto exacto a cambiar en el `.md` del agente (nunca lo aplica: no tiene `Write`). `system-auditor` lee el fuente del sistema —instrucciones que el `tools:` de un agente no puede ejecutar, plantillas que divergieron, conteos desfasados, loops sin tope— y propone correcciones. Ninguno toca el control de flujo (topes, checkpoints) sin marcarlo como decisión mayor.
-- **Tres motores.** Claude orquesta y hace la lógica con estado; Codex CLI revisa antes del push y ejecuta trabajo mecánico de un archivo; Antigravity CLI (Gemini) revisa lo visual y hace cambios de estilo. Cada hallazgo externo se verifica contra el código antes de convertirse en trabajo.
+## Empezar
 
-## El pipeline
+1. Clona este repositorio.
+2. Abre su carpeta raíz en Codex.
+3. Lee [AGENTS.md](AGENTS.md) y [LLAMA-HARNESS.md](LLAMA-HARNESS.md).
+4. Revisa los modelos de `.codex/agents/` según tu acceso.
+5. Revisa y confía los hooks mediante `/hooks`, si tu versión admite esa función.
+6. Mantén las credenciales y los proyectos de aplicación fuera del repositorio.
 
-```
-tarjeta / tarea ─► Step 0: historial de corridas, ADRs, cadencia de retro/auditoría
-                 ─► Step 0.7: Nivel 0 | Nivel 1 | pipeline completo
-                 ─► architect ─► planner ─┬─► coder ─────┐   varios en paralelo,
-                       (Step 2.5: parada   └─► coder-web ─┤   dueño exclusivo por archivo
-                        humana si hay riesgo)             ▼
-                                            checkpoint commit (Step 3.6)
-                                                          ▼
-              QA ∥ adversary ∥ security-review ∥ codex ∥ tests de integración   (gate de pre-PR)
-                                                          ▼
-              un solo paquete de hallazgos ─► coder (2 ciclos QA, 1 ronda adversary) ─► commit
-                                                          ▼
-              Step 4.7: push y PR solo con "sí" explícito ─► Step 5: run doc + INDEX (obligatorio)
-```
+La configuración del proyecto habilita agentes y limita su concurrencia.
+La configuración global de permisos sigue bajo control del usuario.
+Este repositorio no concede permisos ni configura automáticamente integraciones externas.
 
-Agentes independientes, fuera del pipeline: `analyst` (preguntas de datos, solo lectura), `ux-researcher` (referencias y maquetas HTML), `ux-ui` (auditoría de la app viva en Chrome: contraste, teclado, axe-core), `retro` y `system-auditor`.
+## Componentes
 
-## Mapa de carpetas
+| Ruta | Contenido |
+|---|---|
+| [AGENTS.md](AGENTS.md) | Reglas de trabajo y coordinación |
+| [.codex/README.md](.codex/README.md) | Configuración, agentes y hooks de Codex |
+| [.agents/skills/](.agents/skills/) | Skills nativas y adaptadores del Harness existente |
+| [CodexMemory/INDEX.md](CodexMemory/INDEX.md) | Flujo de trabajo, decisiones y registros |
+| [Funnel Studio](systems/llama-funnel-studio/README.md) | Protocolos y herramientas para analizar y adaptar funnels |
+| [.codex/templates/run-record.md](.codex/templates/run-record.md) | Plantilla de evidencia para trabajos importantes |
+| [MCP y REPL](docs/mcp-repl.md) | Descubrimiento diferido y ejecución persistente |
+| [Auditoría](docs/harness-audit.md) | Decisiones, límites y componentes conservados |
 
-```
-.claude/
-├── agents/        11 subagentes (frontmatter: name, description, tools, model)
-├── commands/      10 comandos: orquestar, worktree, codex, antigravity, ux,
-│                  verificar-ramas, diagramar, auditar-vault, shunt, requisitos
-├── hooks/         guardas PreToolUse/PostToolUse + revisar_secretos.py y sus tests
-├── scripts/       shunt: bulk-read, code-write, gh-read-shunt
-├── tools/         scripts deterministas sin dependencias: drawio/, vault/
-├── settings.json  permisos y registro de hooks activos del proyecto
-├── workflows/     workflows invocados por el orquestador
-└── launch.json    ejemplo de configuraciones de arranque del frontend
-.agents/skills/security/   catálogo CWE/OWASP que carga la revisión de seguridad
-docs/guias/                playbook anti-regresiones, principios minimalistas, detección de code smells (genéricos)
-scripts/                   pre-commit (secretos + vault), instalador de hooks, validar-vault.py
-profiles/                  perfiles de stack (dotnet, node-ts, python) que alimentan coder/coder-ui
-Meta/                      documentación del sistema multiagente y de la configuración del vault
-CLAUDE.md · AGENTS.md      reglas para cualquier sesión (AGENTS.md para herramientas que no leen CLAUDE.md)
-Home.md                    tablero del vault (Dataview)
-install.sh · install.ps1   instalador/configurador (ver "Quick start" abajo)
-harness.ini.example        plantilla de configuración; harness.ini real nunca se versiona
-```
+El Harness incluye nueve perfiles de agentes.
+Funnel Studio aporta 24 funciones de dominio.
+El agente principal activa únicamente los especialistas necesarios.
 
-## Quick start — instalarlo en tu proyecto
+## Uso diario
 
-```sh
-git clone https://github.com/AmpueroDiego/agentic-harness.git
-cd agentic-harness
-./install.sh --target /ruta/a/tu-proyecto      # asistente interactivo
-```
+- Resuelve cambios pequeños directamente.
+- Planifica cambios relevantes antes de implementarlos.
+- Delega tareas independientes con archivos asignados.
+- Revisa los cambios de seguridad, datos y contratos mediante agentes independientes.
+- Limita cada ciclo de reparación a dos rondas.
+- Registra decisiones importantes y comprobaciones reales.
 
-En Windows sin bash: `.\install.ps1 -Target C:\ruta\a\tu-proyecto`. Ambos son
-equivalentes y aceptan `-DryRun`/`--dry-run` para ver qué harían sin escribir
-nada, y `-NonInteractive`/`--non-interactive` para correr sin preguntas
-(usa `harness.ini.example` tal cual, o el que le pases con `--ini`).
+Usa `$ux-review` para revisar una interfaz.
+Usa `$llama-funnel-studio` para analizar o adaptar un funnel.
 
-El instalador:
-1. Detecta qué tenés instalado. Git y Python 3 son necesarios para la instalación completa; el resto de motores e integraciones son opcionales.
-2. Genera (o reutiliza) `harness.ini` en tu proyecto — nunca se versiona, ver `harness.ini.example` para el formato y qué es obligatorio vs. opcional.
-3. Genera y copia `.agents/skills/`; copia `agents/`, `commands/`, `skills/`, `hooks/`, `scripts/`, `tools/`, `workflows/` y `profiles/` a `.claude/` de tu proyecto, y `CLAUDE.md`/`AGENTS.md` a su raíz, con `AcmeOrg` ya sustituido por el nombre de tu proyecto (y la rama base, si no es `develop`). Un archivo existente y distinto se respalda a `.bak` en vez de perderse.
-4. Instala un hook de `pre-commit` que revisa secretos antes de cada commit (`core.hooksPath` apunta a `.claude/hooks-git/`), salvo `--skip-hook` o si el destino ya tenía otro hook configurado.
-5. Fusiona de forma idempotente los hooks requeridos en el `settings.json` existente, preserva los permisos del proyecto y configura la base desde `[git] base_branch`.
-6. Termina con un **doctor**: qué quedó activo y qué se omitió (hooks, skills, tracker, motores, MCP de base de datos, vault).
+## Herramientas opcionales
 
-Es idempotente (correr dos veces no cambia nada de más) y no destructivo
-(nunca sobrescribe sin backup, salvo `--force`). Después de instalar, quedan
-tres cosas manuales que el instalador no adivina por vos:
-- **Los nombres reales de tus repos.** Los placeholders son `api-core`, `api-contracts`, `api-people`, `api-auth`, `api-delivery`, `web-app`; un `grep -rl api-core .claude` te da los puntos de contacto. Los roles (BFF, IdP, frontend) sí importan: `coder` trae de ejemplo convenciones .NET/EF Core y `coder-web` React/TypeScript.
-- **Pegar el perfil de stack elegido dentro del agente.** El instalador copia `profiles/` a `.claude/profiles/` como referencia, pero **no** inyecta su contenido en la sección "Stack real" de `coder`/`coder-web` — eso hoy es un paso manual (copiar/pegar el `.md` del perfil que corresponda). Ver "Perfiles de stack" abajo.
-- **La sección "Visión de dominio" de `CLAUDE.md`.** Los seis agentes del pipeline la leen antes de diseñar; llega vacía a propósito — es lo único que de verdad no se puede genérica.
-- **La memoria histórica privada se omite.** Usa `docs/runs/golden-tasks.md` para el replay público; el Step 5 de `/orquestar` escribe run docs nuevos.
+Node.js ejecuta los hooks incluidos.
+Python ejecuta los analizadores de Funnel Studio.
+Playwright permite capturar páginas con un navegador instalado y un perfil temporal.
 
-Detalles que conviene leer primero: `Meta/sistema-multiagente-supervisado.md` (por qué existe cada capa y qué pasó sin ella) y `.claude/commands/orquestar.md` (el protocolo completo, paso por paso).
+Consulta las dependencias en [tools/README.md](systems/llama-funnel-studio/tools/README.md).
+La documentación del navegador está en [.codex/browser/README.md](.codex/browser/README.md).
 
-## Integraciones opcionales
+## Compatibilidad con Claude
 
-Todo lo que no sea git es opcional y el sistema se degrada sin romperse si
-falta — `harness.ini.example` documenta cada sección:
+El repositorio conserva `.claude/`, los perfiles anteriores y las skills de diseño.
+La documentación anterior sigue en [README.claude.md](README.claude.md).
+Las instrucciones específicas de Claude siguen en [CLAUDE.md](CLAUDE.md).
+Los adaptadores generados conservan su fuente en `.claude/`.
 
-| Integración | Sección del ini | Si falta |
-|---|---|---|
-| Tracker de tareas (Trello / Azure DevOps / GitHub Issues) | `[tracker]` | `orquestar` pregunta la tarjeta a mano en vez de buscarla |
-| GitHub | `[github]` | los PR se abren sin reviewer por defecto |
-| Codex CLI | `[engines] codex_enabled` | se salta la segunda revisión antes del push |
-| Antigravity CLI (Gemini) | `[engines] antigravity_enabled` | sin revisor visual ni shunt de lecturas grandes |
-| MCP de base de datos | `[databases]` | `planner`/`analyst` trabajan solo con lo que puedan leer del código |
-| Vault de Obsidian | `[vault]` | sin memoria de largo plazo entre corridas; `docs/adr`/`docs/runs` siguen sirviendo como markdown simple |
+El instalador existente configura el Harness de Claude.
+No lo necesitas para abrir este repositorio con Codex.
+Consulta [AGENTS.claude.md](AGENTS.claude.md) para las equivalencias del flujo anterior.
 
-Los secretos de cada integración (tokens, PATs, API keys) nunca van en
-`harness.ini`: el ini solo declara el *nombre* de la variable de entorno
-(sufijo `_env`) que los contiene.
+## Publicación y seguridad
 
-## Perfiles de stack
+Publica cambios mediante una rama y un pull request.
+Conserva la licencia y el historial existente.
+Revisa el contenido preparado antes de cada publicación.
 
-`profiles/` trae tres ejemplos (`dotnet.md`, `node-ts.md`, `python.md`) con
-las convenciones y "hard rules" que un `coder`/`coder-ui` necesita para ese
-stack. `harness.ini` declara `stack_profile = <nombre>` por repo; si tu
-stack no está entre los tres, copiá `profiles/_plantilla.md` y escribí el
-tuyo — ver `profiles/README.md`. El instalador los deja copiados en
-`.claude/profiles/`; pegar el contenido del que corresponda dentro de la
-sección "Stack real" de `coder`/`coder-web` (o `coder-ui`) es hoy un paso
-manual, no algo que `install.sh` haga por vos.
+Los hooks complementan los permisos del entorno.
+Los agentes revisores no crean un aislamiento de seguridad.
+Los ejemplos de configuración no incluyen credenciales.
 
-## Guías genéricas (`docs/guias/`)
+Consulta el [registro de publicación](CodexMemory/runs/2026-11-16-publicar-harness.md).
 
-Tres documentos de referencia, reescritos desde cero en genérico a partir de
-un playbook real de producción — sin nombres de repos, fechas ni datos de
-negocio del proyecto original:
-
-- [`PLAYBOOK-ANTI-REGRESIONES-Y-LECCIONES-APRENDIDAS.md`](docs/guias/PLAYBOOK-ANTI-REGRESIONES-Y-LECCIONES-APRENDIDAS.md): 24 reglas de oro contra errores reales (config con placeholders, CORS, migraciones que no se auto-aplican, defensas que no defienden, tamaño de PR, etc.), citado por `CLAUDE.md` y por los agentes del pipeline.
-- [`PRINCIPIOS-INGENIERIA-MINIMALISTA.md`](docs/guias/PRINCIPIOS-INGENIERIA-MINIMALISTA.md): el algoritmo de 5 pasos (cuestionar, borrar, simplificar, acelerar, automatizar) aplicado al propio pipeline de agentes, con fuentes primarias citadas.
-- [`DETECCION-CODE-SMELLS.md`](docs/guias/DETECCION-CODE-SMELLS.md): qué smells detecta un analizador estático (Sonar, Meziantou, ESLint) y cuáles solo atrapa la revisión humana.
-
-Agregá los tuyos con el mismo formato a medida que tu equipo los descubra —
-la sección 19 del playbook explícitamente pide citar la fuente única, no
-copiarla dentro de cada agente.
-
-## Sobre esta versión
-
-Es una copia anonimizada de un sistema en uso. Se retiraron: el contexto de negocio del cliente (esquemas, reglas, marca, propuestas de proveedores), los ADRs, los run docs, el tablero de tareas y su skill, las guías de entrega y el playbook (cada regla citaba código del cliente), las colecciones de pruebas, credenciales de cualquier tipo y todo archivo que hablara del producto en vez del sistema de agentes. En una segunda pasada se reescribió en genérico todo lo que describía el rubro del cliente (esquemas de base, nombres de columnas, conceptos del negocio) y se quitaron los números de corrida y de PR; las fechas se conservan porque cuentan cómo evolucionó el sistema.
-
-## Licencia
-
-MIT. Ver [LICENSE](LICENSE). © 2026 Diego Ampuero.
-
-
-## Evaluación reproducible
-
-- CI versionado en `.github/workflows/ci.yml` valida hooks, skills, instaladores y fixtures en Linux y Windows.
-- `docs/runs/golden-tasks.md` y `docs/runs/golden-tasks.json` publican tareas y criterios; `python scripts/replay_golden_tasks.py` prepara los prompts para repetirlas. El runner no invoca ni puntúa un modelo: registra resultados, modelo, SHA, tokens y duración siguiendo el protocolo del documento.
-- La cifra histórica de 175 tareas es antecedente del proyecto fuente, no evidencia pública de tasa de éxito, regresiones o ahorro.
-
-## Skills de UX/UI y diseño
-
-El instalador copia las skills fuente desde `.claude/skills/` y genera sus punteros Codex en `.agents/skills/`. Incluyen auditoría de accesibilidad, crítica de diseño, handoff, sistema de diseño, investigación de usuarios y UX copy, además de skills propias del harness para CRM, paletas, dirección visual, convertir una referencia visual en interfaz y revisar el resultado renderizado.
-
-Las skills de Anthropic se conservan con su licencia Apache-2.0 y atribución en `.claude/skills/_third-party/`. `image-to-code` y `design-qa` son versiones originales del harness; el texto del plugin propietario Product Design de OpenAI no se redistribuye.
+Licencia: [MIT](LICENSE).

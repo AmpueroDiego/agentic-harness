@@ -27,6 +27,10 @@ jobs:
           python scripts/replay_golden_tasks.py > /tmp/golden-tasks.txt
       - name: Installer dry run
         run: bash install.sh --target "$RUNNER_TEMP/harness-target" --dry-run --non-interactive
+      - name: Codex package and guard
+        run: |
+          python scripts/validate_codex_harness.py
+          node --test .codex/hooks/test_pre_tool_use_guard.cjs
   windows-installer:
     runs-on: windows-latest
     steps:

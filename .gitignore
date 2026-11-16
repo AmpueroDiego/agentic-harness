@@ -55,3 +55,17 @@ docs/pruebas/
 # Node
 node_modules/
 
+# Local Codex runtime, browser profiles, credentials, and generated case data.
+/.local/
+/.codex/browser/browsers/
+/.codex/browser/profiles/
+/.codex/browser/.cache/
+*.crt
+*.cer
+*.db
+*.sqlite
+*.sqlite3
+systems/llama-funnel-studio/casos/*
+!systems/llama-funnel-studio/casos/_PLANTILLA.md
+systems/llama-funnel-studio/agente_mejora/*.xlsx
+

@@ -5,6 +5,10 @@ tags: [dashboard, meta]
 
 # AcmeOrg — Panel de conocimiento
 
+La entrada de Codex está en [README.md](README.md).
+Consulta [LLAMA-HARNESS.md](LLAMA-HARNESS.md) para la arquitectura nueva.
+El índice siguiente conserva el sistema anterior de Claude.
+
 > Vault a nivel de `AcmeOrg/`, cubre los repos de código hermanos (`api-core`, `api-contracts`, `api-people`, `api-auth`, `api-delivery`, `web-app`) y el pipeline multiagente en un solo lugar. Requiere el plugin **Dataview** (Settings → Community plugins → Dataview) — las tablas se generan solas leyendo el frontmatter de cada nota, no hace falta mantenerlas a mano.
 >
 > 🌟 **Arquitectura Central:** [[Meta/sistema-multiagente-supervisado|🤖 Sistema Multiagente Supervisado]]

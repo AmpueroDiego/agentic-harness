@@ -163,7 +163,7 @@ for f in "$SOURCE"/.claude/commands/*.md; do
     sustituir_placeholders "$STAGE/.claude/commands/$(basename "$f")"
 done
 cp "$SOURCE/CLAUDE.md" "$STAGE/CLAUDE.md"; sustituir_placeholders "$STAGE/CLAUDE.md"
-cp "$SOURCE/AGENTS.md" "$STAGE/AGENTS.md"; sustituir_placeholders "$STAGE/AGENTS.md"
+cp "$SOURCE/AGENTS.claude.md" "$STAGE/AGENTS.md"; sustituir_placeholders "$STAGE/AGENTS.md"
 
 PYTHON_CMD=""
 for C in python3 python py; do
