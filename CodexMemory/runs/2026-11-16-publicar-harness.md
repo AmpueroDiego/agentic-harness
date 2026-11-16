@@ -22,7 +22,7 @@ tags: [harness, codex, publicacion, auditoria]
 | Seleccionar fuentes | Archivos reutilizables del workspace | Inventario independiente | Lista explícita, sin copiar carpetas completas |
 | Mantener compatibilidad | Instaladores y skills existentes | Plan y revisión independiente | Claude conserva sus instrucciones anteriores |
 | Documentar herramientas | Guía MCP y REPL | Fuentes oficiales y observaciones del entorno | Capacidades externas claramente diferenciadas |
-| Publicar | Rama `feature/llama-codex-harness` | Solicitud explícita; revisión previa | Pendiente de subida |
+| Publicar | Rama `feature/llama-codex-harness` | Solicitud explícita; revisión previa | Rama publicada y PR abierto |
 
 ## Cambios y evidencia
 
@@ -45,11 +45,18 @@ tags: [harness, codex, publicacion, auditoria]
 - Revisión del sistema: PASS después de corregir codificación, enlaces y formatos de entrega.
 - Revisión de contrato: PASS sobre la evidencia de compatibilidad y límites de publicación.
 - El detector del guard inspeccionó el contenido preparado sin bloquear la publicación.
+- GitHub Actions aprobó el commit inicial de publicación.
+- El PR usa la API oficial de GitHub y autenticación existente solo en memoria.
+- La selección amplia de Edge recibió un rechazo automático por sus pestañas privadas ajenas al trabajo.
+- La publicación continuó mediante una operación específica de GitHub, sin leer esas pestañas.
 
 ## Resultado
 
-- Estado: en curso.
-- El branch y el pull request quedarán como evidencia final.
+- Estado: completo para publicación mediante rama y pull request.
+- Pull request: [#4](https://github.com/AmpueroDiego/agentic-harness/pull/4).
+- Rama: [feature/llama-codex-harness](https://github.com/AmpueroDiego/agentic-harness/tree/feature/llama-codex-harness).
+- El commit inicial es `a1b7cfb93e89c64d1db1b39b3b18157fdf225d80`.
+- La integración en `main` y una release quedan fuera de esta entrega.
 - Los servidores MCP y las conexiones personales requieren configuración independiente.
 - La cobertura del hook se limita al matcher Bash declarado.
 - Los modelos y campos de configuración dependen del cliente y de la cuenta.
