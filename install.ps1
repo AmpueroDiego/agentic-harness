@@ -159,7 +159,7 @@ Get-ChildItem (Join-Path $Source ".claude\commands") -Filter *.md -ErrorAction S
 }
 Copy-Item (Join-Path $Source "CLAUDE.md") (Join-Path $Stage "CLAUDE.md") -Force
 Convert-Placeholders (Join-Path $Stage "CLAUDE.md")
-Copy-Item (Join-Path $Source "AGENTS.md") (Join-Path $Stage "AGENTS.md") -Force
+Copy-Item (Join-Path $Source "AGENTS.claude.md") (Join-Path $Stage "AGENTS.md") -Force
 Convert-Placeholders (Join-Path $Stage "AGENTS.md")
 
 $python = Get-Command python -ErrorAction SilentlyContinue
