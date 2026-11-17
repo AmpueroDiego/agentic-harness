@@ -4,13 +4,42 @@
 
 El Harness conecta los proyectos; no reemplaza sus fuentes. El código, contratos, reglas de marca, decisiones de producto y protocolos de cada proyecto siguen viviendo junto a ese proyecto.
 
+## Qué hace especial a Llama Harness
+
+**Especializado en productos digitales: ingeniería, UX, adquisición y conversión dentro de un mismo flujo.**
+
+| Capacidad | Aplicación concreta |
+|---|---|
+| **Edge + Playwright** | Navegar, comprobar redirecciones y recoger errores JavaScript desde un REPL persistente con perfiles temporales. |
+| **Diez perfiles de agentes** | Planificar, explorar, implementar y revisar código o arquitectura; auditar el Harness y estudiar fallos recurrentes. |
+| **24 funciones de Funnel Studio** | Conectar oferta, psicología, diseño, copy, adquisición, ingeniería y operaciones mediante contratos de salida. |
+| **Memoria con evidencia** | Conservar decisiones y resultados comprobados en Markdown, junto al proyecto que los produce. |
+| **Herramientas según la tarea** | Descubrir capacidades disponibles y reutilizar sesiones de ejecución, sin asumir integraciones instaladas. |
+| **Coordinación con límites** | Repartir archivos entre tareas independientes, sintetizar revisiones y limitar las rondas de reparación. |
+
+### Del problema a una comprobación real
+
+Si una pantalla del CRM no carga, el flujo puede revisar HTTP, seguir la redirección en Edge y recoger errores JavaScript.
+En esta sesión se comprobó que la ruta local de Conversaciones redirige al login sin errores JavaScript.
+La vista autenticada aún necesita su propia comprobación.
+
+Si el objetivo es adaptar un funnel, Studio mide la referencia y organiza estrategia, especialistas y copy en tres olas.
+Los faltantes del producto quedan explícitos; las directivas finales permiten pasar a implementación cuando se solicite.
+
+### Qué está incluido y qué depende del entorno
+
+Los perfiles, instrucciones y protocolos son archivos del Harness.
+Edge, Playwright, el REPL, Computer Use y las conexiones MCP requieren disponibilidad y configuración en cada entorno.
+La prueba local con Edge demuestra esa capacidad en este equipo; clonar el repositorio no la instala.
+Los hooks requieren revisar y confiar su definición exacta antes de depender de ellos.
+
 ## Mapa del Harness
 
 | Capa | Ubicación | Función |
 |---|---|---|
 | Reglas comunes | `AGENTS.md` | Clasificación de riesgo, revisión por pares, límites y reglas que aplican al workspace. |
 | Runtime de Codex | `.codex/` | Roles TOML, hooks, configuración, notas del navegador y plantilla de registros. |
-| Flujos reutilizables | `.agents/skills/` | Workflows descubribles por Codex. `$ux-review` sirve para revisar interfaces; `$llama-funnel-studio` enruta al proceso de Studio. |
+| Flujos reutilizables | `.agents/skills/` | `$align-to-spec` aclara tareas ambiguas; `$diagnosing-bugs` guía diagnósticos; `$ux-review` revisa interfaces; `$llama-funnel-studio` conecta Studio. |
 | Memoria del Harness | `CodexMemory/` | Índice, ADRs del Harness, flujo operativo, escenarios de guardia y registros de trabajos importantes. |
 | Fuente del proyecto | Carpeta de cada proyecto | Sus propios `AGENTS.md`, README, manifiestos, contratos, instrucciones y decisiones de producto. |
 
@@ -21,6 +50,7 @@ Para que Codex descubra de forma consistente los agentes y skills compartidos, a
 - **Riesgo proporcional:** cambios reversibles pequeños se hacen directamente; tareas no triviales reciben plan y revisión; seguridad, datos, producción y acciones externas tienen revisiones especializadas y un punto humano cuando corresponda.
 - **Plan y Goal cumplen funciones distintas:** `/plan` ayuda a decidir el camino; `/goal` conserva el resultado esperado y su condición verificable entre turnos. Ninguno amplía permisos.
 - **El agente principal orquesta:** los custom agents TOML definen perfiles que Codex puede lanzar como subagentes. El principal conserva el objetivo, decide qué tareas son independientes, recoge resultados y comprueba la evidencia.
+- **Arquitectura con evidencia:** `architecture_reviewer` recibe un alcance y material del proyecto; devuelve hasta tres oportunidades justificadas sin editar código.
 - **Trabajo asíncrono:** un comando largo e independiente puede correr en segundo plano mientras Codex sigue con otra tarea; el estado se consulta con `/ps` y se detiene con `/stop`. Un proceso de fondo conserva su salida/proceso; un subagente tiene además su propia tarea y contexto. Para trabajos de varias vueltas con cierre comprobable, usa `/goal`.
 - **Los subagentes heredan permisos:** reciben el sandbox y las aprobaciones del agente principal. Instrucciones de “solo lectura” dentro de un perfil no crean aislamiento real.
 - **Skills bajo demanda:** Codex puede elegir una skill por su descripción o el usuario puede llamarla con `$nombre`. La skill de Studio enlaza a los protocolos originales; evita crear un segundo manual que se desactualice.

@@ -10,6 +10,8 @@ Use the lightest flow that fits the change. The main agent owns the task and che
 
 ## Coordination rules
 
+For Tier 2 changes involving public APIs, schemas, authorization, data boundaries, or external contracts, include an independent `contract_reviewer` pass in addition to QA and adversarial review. The main agent supplies each reviewer with the relevant diff, project conventions, acceptance conditions, and available evidence.
+
 - Keep reports structured: `## Plan`, `## QA Review`, or `## Adversarial Review`, ending in `### Result: PASS` or `### Result: FINDINGS`.
 - A reviewer verdict is advisory. It never grants permissions or proves that a command, test, or UI check ran.
 - Parallel agents must have independent tasks and disjoint write ownership. If work overlaps, sequence it through the main agent.

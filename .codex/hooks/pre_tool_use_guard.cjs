@@ -33,7 +33,7 @@ function hasSensitiveStagedContent(command, cwd) {
     /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/,
     /(?:api[_-]?key|access[_-]?token|client[_-]?secret|password|passwd|secret)\s*[:=]\s*["']([^"'\r\n]{12,})["']/i
   ];
-  const placeholder = /(?:example|placeholder|replace[_ -]?me|change[_ -]?me|dummy|fake|test|your[_ -]?)/i;
+  const placeholder = /^(?:example|placeholder|replace[_ -]?me(?:[_ -]?example)?|change[_ -]?me|dummy|fake|test)$/i;
   for (const file of files) {
     if (binaryExt.test(file)) continue;
     const blob = runGit(['show', `:${file}`], gitRoot, 8 * 1024 * 1024);
@@ -42,19 +42,22 @@ function hasSensitiveStagedContent(command, cwd) {
     if (blob.stdout.includes(0)) continue;
     const text = blob.stdout.toString('utf8');
     for (const signature of signatures) {
-      const match = signature.exec(text);
-      if (!match) continue;
-      const value = match[1] || match[0];
-      if (placeholder.test(value)) continue;
-      return `Staged file ${file} matches a secret pattern (${signature.source.includes('PRIVATE KEY') ? 'private key' : 'credential-like value'}); value redacted, commit blocked.`;
+      const scan = new RegExp(signature.source, `${signature.flags}g`);
+      for (const match of text.matchAll(scan)) {
+        const value = match[1] || match[0];
+        if (placeholder.test(value)) continue;
+        return `Staged file ${file} matches a secret pattern (${signature.source.includes('PRIVATE KEY') ? 'private key' : 'credential-like value'}); value redacted, commit blocked.`;
+      }
     }
   }
   return null;
 }
 function unboundedRead(command, cwd) {
-  if (/[|]/.test(command) || /-(?:TotalCount|First|Skip)\b|\b(?:head|tail|sed)\b/i.test(command)) return null;
   const match = command.match(/\b(?:cat|type|Get-Content|gc)\b(?:\s+-(?:Raw|LiteralPath|Path)\b)*\s+(?:"([^"]+)"|'([^']+)'|([^\s;&|]+))/i);
   if (!match) return null;
+  const segmentEnd = command.slice(match.index).search(/[;&|]/);
+  const readSegment = segmentEnd < 0 ? command.slice(match.index) : command.slice(match.index, match.index + segmentEnd);
+  if (!/\b-Raw\b/i.test(readSegment) && /-(?:TotalCount|First|Skip)\b/i.test(readSegment)) return null;
   const file = match[1] || match[2] || match[3];
   if (!file || file.startsWith('-') || /(?:^|[\\/])\.env(?:\.(?:example|sample|template))?$/i.test(file)) return null;
   const absolute = path.resolve(cwd, file);

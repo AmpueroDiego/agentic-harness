@@ -8,6 +8,7 @@ Revisa [AGENTS.md](../AGENTS.md) antes de trabajar.
 Los perfiles están en `agents/`.
 El archivo `config.toml` habilita agentes y limita la concurrencia.
 Cada perfil declara su función y sus límites.
+`architecture_reviewer` propone mejoras de arquitectura con evidencia y no modifica código.
 Algunos perfiles seleccionan modelos concretos.
 Adapta esa selección a los modelos disponibles en tu cuenta.
 
@@ -45,6 +46,7 @@ Mantén los registros privados fuera de este repositorio público.
 [Funnel Studio](../systems/llama-funnel-studio/README.md) incluye protocolos y herramientas de dominio.
 La skill `$llama-funnel-studio` conecta esos protocolos con Codex.
 La skill `$ux-review` permite revisar interfaces con evidencia real.
+Las skills `$align-to-spec` y `$diagnosing-bugs` cubren requisitos ambiguos y fallos difíciles.
 
 El Harness conserva las herramientas anteriores de Claude en `.claude/`.
 Sus adaptadores no sustituyen los perfiles nativos de Codex.
