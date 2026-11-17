@@ -47,6 +47,7 @@ Mantén los registros privados fuera de este repositorio público.
 La skill `$llama-funnel-studio` conecta esos protocolos con Codex.
 La skill `$ux-review` permite revisar interfaces con evidencia real.
 Las skills `$align-to-spec` y `$diagnosing-bugs` cubren requisitos ambiguos y fallos difíciles.
+La skill `$constrain-api` ayuda a expresar límites verificables sobre un SDK o una dependencia del proyecto.
 
 El Harness conserva las herramientas anteriores de Claude en `.claude/`.
 Sus adaptadores no sustituyen los perfiles nativos de Codex.

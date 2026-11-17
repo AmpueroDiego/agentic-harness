@@ -26,7 +26,7 @@ Versión propuesta: **2.0.0**. Consulta [VERSION](VERSION).
 |---|---|
 | **Grounding** | Hallazgos ligados a código, pantallas, fuentes o mediciones que puedes comprobar. |
 | **Diez perfiles de agentes** | Planificación, investigación, implementación, QA y revisiones de contratos, seguridad y arquitectura según la tarea. |
-| **39 entradas de skills** | Protocolos para alinear requisitos, diagnosticar fallos, UX/UI, diseño, investigación, código y coordinación. |
+| **40 entradas de skills** | Protocolos para alinear requisitos, diagnosticar fallos, acotar APIs, UX/UI, diseño, código y coordinación. |
 | **Edge y Playwright** | Inspección de interfaces, redirecciones y errores JavaScript con perfiles temporales. |
 | **MCP y REPL persistente** | Conexión con herramientas externas y reutilización del contexto de ejecución cuando el entorno lo permite. |
 | **Scripts reutilizables** | Validación del paquete, mantenimiento de adaptadores, revisión de texto y tareas de evaluación repetibles. |
@@ -34,7 +34,7 @@ Versión propuesta: **2.0.0**. Consulta [VERSION](VERSION).
 | **Retrospectivas con evidencia** | Detección de fallos repetidos y propuestas concretas para mejorar el proceso. |
 | **Funnel Studio opcional** | Análisis y adaptación de ofertas y páginas de captación mediante protocolos y herramientas de medición. |
 
-Las skills incluyen cuatro entradas nuevas de Codex, 34 adaptadores generados y un catálogo de seguridad heredado.
+Las skills incluyen cinco entradas nuevas de Codex, 34 adaptadores generados y un catálogo de seguridad heredado.
 La sección de [compatibilidad](#compatibilidad-y-reutilización) explica sus diferencias.
 
 ## Empezar
@@ -126,6 +126,7 @@ El agente principal decide si necesita especialistas y les entrega alcance, arch
 |---|---|---|
 | Aclarar una petición importante | [`$align-to-spec`](.agents/skills/align-to-spec/SKILL.md) | Una especificación breve con alcance, decisiones pendientes y condición de cierre. |
 | Encontrar la causa de un fallo difícil | [`$diagnosing-bugs`](.agents/skills/diagnosing-bugs/SKILL.md) | Señal reproducible, hipótesis descartadas y causa respaldada por evidencia. |
+| Limitar una API o dependencia | [`$constrain-api`](.agents/skills/constrain-api/SKILL.md) | Frontera permitida, regla verificable y plan para infracciones existentes. |
 | Evaluar una pantalla real | [`$ux-review`](.agents/skills/ux-review/SKILL.md) | Hallazgos localizados, impacto y propuestas concretas. |
 | Revisar fricción arquitectónica | `architecture_reviewer` | Hasta tres oportunidades justificadas, con riesgos y tradeoffs; sin cambios automáticos. |
 | Adaptar un funnel | [`$llama-funnel-studio`](.agents/skills/llama-funnel-studio/SKILL.md) | Mediciones, decisiones de oferta y directivas para el producto destino. |
@@ -325,7 +326,7 @@ Los hechos, activos y pruebas ausentes se marcan como faltantes.
 
 ## Compatibilidad y reutilización
 
-Las entradas [`ux-review`](.agents/skills/ux-review/SKILL.md), [`llama-funnel-studio`](.agents/skills/llama-funnel-studio/SKILL.md), [`align-to-spec`](.agents/skills/align-to-spec/SKILL.md) y [`diagnosing-bugs`](.agents/skills/diagnosing-bugs/SKILL.md) contienen protocolos nuevos para Codex.
+Las entradas [`ux-review`](.agents/skills/ux-review/SKILL.md), [`llama-funnel-studio`](.agents/skills/llama-funnel-studio/SKILL.md), [`align-to-spec`](.agents/skills/align-to-spec/SKILL.md), [`diagnosing-bugs`](.agents/skills/diagnosing-bugs/SKILL.md) y [`constrain-api`](.agents/skills/constrain-api/SKILL.md) contienen protocolos nuevos para Codex.
 Los 34 adaptadores generados apuntan a comandos y skills originales en `.claude/`.
 La entrada [`security`](.agents/skills/security/SKILL.md) conserva un catálogo heredado con referencias de ejemplo a AcmeOrg y .NET/React.
 Ese catálogo necesita contextualización antes de aplicarlo a otro proyecto.

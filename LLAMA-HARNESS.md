@@ -39,7 +39,7 @@ Los hooks requieren revisar y confiar su definición exacta antes de depender de
 |---|---|---|
 | Reglas comunes | `AGENTS.md` | Clasificación de riesgo, revisión por pares, límites y reglas que aplican al workspace. |
 | Runtime de Codex | `.codex/` | Roles TOML, hooks, configuración, notas del navegador y plantilla de registros. |
-| Flujos reutilizables | `.agents/skills/` | `$align-to-spec` aclara tareas ambiguas; `$diagnosing-bugs` guía diagnósticos; `$ux-review` revisa interfaces; `$llama-funnel-studio` conecta Studio. |
+| Flujos reutilizables | `.agents/skills/` | `$align-to-spec` aclara tareas; `$diagnosing-bugs` guía diagnósticos; `$constrain-api` acota dependencias; `$ux-review` revisa interfaces; `$llama-funnel-studio` conecta Studio. |
 | Memoria del Harness | `CodexMemory/` | Índice, ADRs del Harness, flujo operativo, escenarios de guardia y registros de trabajos importantes. |
 | Fuente del proyecto | Carpeta de cada proyecto | Sus propios `AGENTS.md`, README, manifiestos, contratos, instrucciones y decisiones de producto. |
 
@@ -51,6 +51,7 @@ Para que Codex descubra de forma consistente los agentes y skills compartidos, a
 - **Plan y Goal cumplen funciones distintas:** `/plan` ayuda a decidir el camino; `/goal` conserva el resultado esperado y su condición verificable entre turnos. Ninguno amplía permisos.
 - **El agente principal orquesta:** los custom agents TOML definen perfiles que Codex puede lanzar como subagentes. El principal conserva el objetivo, decide qué tareas son independientes, recoge resultados y comprueba la evidencia.
 - **Arquitectura con evidencia:** `architecture_reviewer` recibe un alcance y material del proyecto; devuelve hasta tres oportunidades justificadas sin editar código.
+- **Revisión desde fuentes reales:** QA compara el cambio con la solicitud y con las convenciones del proyecto. El principal entrega el diff, su base y los estándares pertinentes; un revisor independiente puede empezar con contexto fresco.
 - **Trabajo asíncrono:** un comando largo e independiente puede correr en segundo plano mientras Codex sigue con otra tarea; el estado se consulta con `/ps` y se detiene con `/stop`. Un proceso de fondo conserva su salida/proceso; un subagente tiene además su propia tarea y contexto. Para trabajos de varias vueltas con cierre comprobable, usa `/goal`.
 - **Automatización con frenos:** antes de conectar un disparador recurrente, define propietario, evento, deduplicación, límite de intentos, comprobación y punto de revisión humana. Una ejecución termina con estado y evidencia; la siguiente comienza por un evento nuevo.
 - **Los subagentes heredan permisos:** reciben el sandbox y las aprobaciones del agente principal. Instrucciones de “solo lectura” dentro de un perfil no crean aislamiento real.

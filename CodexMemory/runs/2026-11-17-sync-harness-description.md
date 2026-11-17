@@ -20,7 +20,9 @@
 - Se preservaron cambios locales previos en `.codex/browser/README.md`, `CodexMemory/INDEX.md` y el registro del 16 de noviembre.
 - La revisión independiente previa del mismo hook local devolvió `PASS` sobre los fragmentos corregidos; no inspeccionó el archivo completo.
 - Se compararon 154 ramas públicas de `mattpocock/skills` por historial Git. Las ideas candidatas están en `docs/mattpocock-branches.md`.
-- Las comprobaciones de esta publicación se registran en el resultado final del PR. No se ejecutaron pruebas de código.
+- Segunda adaptación: `$constrain-api`, QA con ejes Spec y Standards, y handoffs de contexto fresco cuando el runtime lo permita.
+- `git diff --check` pasó antes del commit final. La revisión QA de esta adaptación identificó que el registro debía reflejar la evidencia actual; se corrigió esta línea.
+- No se ejecutaron pruebas de código. El PR sigue pendiente y, por tanto, aún no tiene resultado de revisión de GitHub.
 
 ## Resultado
 
