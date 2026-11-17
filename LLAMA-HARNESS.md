@@ -52,6 +52,7 @@ Para que Codex descubra de forma consistente los agentes y skills compartidos, a
 - **El agente principal orquesta:** los custom agents TOML definen perfiles que Codex puede lanzar como subagentes. El principal conserva el objetivo, decide qué tareas son independientes, recoge resultados y comprueba la evidencia.
 - **Arquitectura con evidencia:** `architecture_reviewer` recibe un alcance y material del proyecto; devuelve hasta tres oportunidades justificadas sin editar código.
 - **Trabajo asíncrono:** un comando largo e independiente puede correr en segundo plano mientras Codex sigue con otra tarea; el estado se consulta con `/ps` y se detiene con `/stop`. Un proceso de fondo conserva su salida/proceso; un subagente tiene además su propia tarea y contexto. Para trabajos de varias vueltas con cierre comprobable, usa `/goal`.
+- **Automatización con frenos:** antes de conectar un disparador recurrente, define propietario, evento, deduplicación, límite de intentos, comprobación y punto de revisión humana. Una ejecución termina con estado y evidencia; la siguiente comienza por un evento nuevo.
 - **Los subagentes heredan permisos:** reciben el sandbox y las aprobaciones del agente principal. Instrucciones de “solo lectura” dentro de un perfil no crean aislamiento real.
 - **Skills bajo demanda:** Codex puede elegir una skill por su descripción o el usuario puede llamarla con `$nombre`. La skill de Studio enlaza a los protocolos originales; evita crear un segundo manual que se desactualice.
 - **Auto-review no es un permiso:** revisa solicitudes elegibles que ya requieren aprobación. No agranda el sandbox, no elimina la red restringida ni convierte una aprobación en autorización para todo.
@@ -60,6 +61,8 @@ Para que Codex descubra de forma consistente los agentes y skills compartidos, a
 - **Navegador y computadora:** reutiliza un REPL persistente y perfiles temporales. Consulta `.codex/browser/README.md` para el alcance portable.
 
 Referencias oficiales actuales: [skills](https://learn.chatgpt.com/docs/build-skills), [subagentes](https://learn.chatgpt.com/docs/agent-configuration/subagents), [Goals](https://learn.chatgpt.com/docs/long-running-work), [background commands](https://learn.chatgpt.com/docs/developer-commands?surface=cli), [hooks](https://learn.chatgpt.com/docs/hooks) y [Auto-review](https://learn.chatgpt.com/docs/sandboxing/auto-review).
+
+La [revisión de ramas de `mattpocock/skills`](docs/mattpocock-branches.md) registra qué ideas experimentales pueden adaptarse y sus límites.
 
 ## Llama Funnel Studio
 

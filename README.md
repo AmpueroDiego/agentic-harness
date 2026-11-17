@@ -361,6 +361,7 @@ Consulta los [escenarios de control](CodexMemory/guardrail-scenarios.md) y la [a
 | [.claude/](.claude/) | Fuentes y herramientas del sistema anterior. |
 | [CodexMemory/INDEX.md](CodexMemory/INDEX.md) | Memoria, ADRs y runs del Harness. |
 | [docs/mcp-repl.md](docs/mcp-repl.md) | Descubrimiento de herramientas y ejecución persistente. |
+| [docs/mattpocock-branches.md](docs/mattpocock-branches.md) | Ideas contrastadas con las ramas públicas de `mattpocock/skills`. |
 | [scripts/](scripts/) | Validadores y herramientas auxiliares. |
 | [profiles/](profiles/) | Convenciones de stack reutilizables. |
 | [systems/](systems/) | Módulos de dominio opcionales. |
