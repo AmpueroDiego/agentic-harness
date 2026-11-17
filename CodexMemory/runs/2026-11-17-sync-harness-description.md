@@ -12,7 +12,8 @@
 |---|---|---|---|---|
 | Conservar la ampliación local previa del README y otros documentos | Repositorio `agentic-harness` | Pedido del usuario; cambios previos ya presentes | Incluido | Evitar perder trabajo anterior del usuario. |
 | Sincronizar skills, perfil y guarda | `.agents/`, `.codex/`, `CodexMemory/` | Pedido del usuario; workspace-write | Hecho | Publicar las capacidades descritas. |
-| Crear rama y subir cambios | Remote GitHub | Pedido explícito de subir cambios | Hecho en `docs/llama-harness-description` | El repositorio exige rama y PR. |
+| Crear rama y subir cambios | Remote GitHub | Pedido explícito de subir cambios | Hecho en `docs/llama-harness-description` | Se preparó la publicación en una rama. |
+| Publicar directamente en `main` | Remote GitHub | Pedido explícito posterior del usuario | Autorizado | El usuario autorizó omitir el PR para esta publicación. |
 
 ## Evidencia
 
@@ -22,9 +23,9 @@
 - Se compararon 154 ramas públicas de `mattpocock/skills` por historial Git. Las ideas candidatas están en `docs/mattpocock-branches.md`.
 - Segunda adaptación: `$constrain-api`, QA con ejes Spec y Standards, y handoffs de contexto fresco cuando el runtime lo permita.
 - `git diff --check` pasó antes del commit final. La revisión QA de esta adaptación identificó que el registro debía reflejar la evidencia actual; se corrigió esta línea.
-- No se ejecutaron pruebas de código. El PR sigue pendiente y, por tanto, aún no tiene resultado de revisión de GitHub.
+- No se ejecutaron pruebas de código. Esta publicación irá directamente a `main` por instrucción del usuario; no habrá resultado de revisión de PR.
 
 ## Resultado
 
-- Estado: rama subida; PR pendiente porque `gh` no está instalado y la interfaz de navegador no estuvo disponible.
-- Pendiente: abrir el PR, confirmar la ruta relativa del hook en una sesión real y revisar su definición con `/hooks`.
+- Estado: rama subida; publicación directa en `main` autorizada por el usuario.
+- Pendiente: confirmar la ruta relativa del hook en una sesión real y revisar su definición con `/hooks`.
